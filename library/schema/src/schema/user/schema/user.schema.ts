@@ -25,7 +25,7 @@ export const userSchema = new mongoose.Schema(
             lowercase: true,
             unique: true
         },
-        password: {
+        password_hash: {
             type: String,
             required: true
         }
