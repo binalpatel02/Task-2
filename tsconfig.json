@@ -7,7 +7,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "5.0",
+    
+    // Blocks the root compiler from ever leaking raw .js files into your folders
+    "noEmit": true
   },
   "include": [
     "app/**/*.ts",
