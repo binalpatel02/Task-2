@@ -1,0 +1,15 @@
+# Dependency directories (matches root and all workspace modules)
+node_modules/
+
+# Production/Build compilation outputs
+dist/
+.tsbuildinfo
+
+# Environmental variables and secret keys
+.env
+.env.*
+!.env.example
+
+# OS generated system files
+Thumbs.db
+.DS_Store
