@@ -1,11 +1,29 @@
 {
   "name": "product-service",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Product microservice",
+  "main": "dist/index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
   },
   "keywords": [],
-  "type": "module"
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.2",
+    "express": "^5.2.1",
+    "joi": "^18.2.8",
+    "mongoose": "^9.9.4"
+  },
+  "devDependencies": {
+    "@library/schema": "*",
+    "@library/shared": "*",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
 }
