@@ -1,38 +1,15 @@
-import type {
-    NextFunction,
-    Request,
-    Response
-} from "express";
-
-import {
-    createProduct,
-    getProducts,
-    getProductById,
-    updateProduct,
-    deleteProduct
-} from "../service/product.service.js";
-
-import {
-    createProductValidator,
-    updateProductValidator
-} from "../validator/product.validator.js";
-
-import {
-    productResponseMapper
-} from "../mapper/product.mapper.js";
+import type { NextFunction, Request, Response } from "express";
+import { createProduct, getProducts, getProductById, updateProduct, deleteProduct } from "../service/product.service.js";
+import { createProductValidator, updateProductValidator } from "../validator/product.validator.js";
+import { productResponseMapper } from "../mapper/product.mapper.js";
 
 
 // CREATE
-export const createProductController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const createProductController = async ( req: Request, res: Response, next: NextFunction ) => {
 
     try {
 
-        const { error } =
-            createProductValidator.validate(req.body);
+        const { error } = createProductValidator.validate(req.body);
 
         if (error) {
             return res.status(400).json({
@@ -56,11 +33,7 @@ export const createProductController = async (
 
 
 // GET ALL
-export const getProductsController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const getProductsController = async ( req: Request, res: Response, next: NextFunction ) => {
 
     try {
 
@@ -85,18 +58,11 @@ export const getProductsController = async (
 
 
 // GET BY ID
-export const getProductByIdController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const getProductByIdController = async ( req: Request, res: Response, next: NextFunction ) => {
 
     try {
 
-        const { product_id } = req.params;
-
-        const product =
-            await getProductById(product_id as string);
+        const product = await getProductById(req.params.product_id as string);
 
         return res.status(200).json({
             success: true,
@@ -111,16 +77,11 @@ export const getProductByIdController = async (
 
 
 // UPDATE
-export const updateProductController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const updateProductController = async ( req: Request, res: Response, next: NextFunction ) => {
 
     try {
 
-        const { error } =
-            updateProductValidator.validate(req.body);
+        const { error } = updateProductValidator.validate(req.body);
 
         if (error) {
             return res.status(400).json({
@@ -129,10 +90,7 @@ export const updateProductController = async (
             });
         }
 
-        const { product_id } = req.params;
-
-        const product =
-            await updateProduct(product_id as string, req.body);
+        const product = await updateProduct(req.params.product_id as string, req.body);
 
         return res.status(200).json({
             success: true,
@@ -147,18 +105,11 @@ export const updateProductController = async (
 
 
 // DELETE
-export const deleteProductController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const deleteProductController = async ( req: Request, res: Response, next: NextFunction ) => {
 
     try {
 
-        const { product_id } = req.params;
-
-        const result =
-            await deleteProduct(product_id as string);
+        const result = await deleteProduct(req.params.product_id as string);
 
         return res.status(200).json({
             success: true,

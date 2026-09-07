@@ -19,17 +19,12 @@ const startServer = async (): Promise<void> => {
         await connectDatabase(MONGO_URI);
 
         app.listen(PORT, () => {
-            console.log(
-                `Product Service running on port ${PORT}`
-            );
+            console.log(`Product Service running on port ${PORT}`);
         });
 
     } catch (error) {
 
-        console.error(
-            "Product Service startup failed:",
-            error
-        );
+        console.error("Product Service startup failed:", error);
 
         process.exit(1);
     }

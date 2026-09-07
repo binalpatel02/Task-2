@@ -2,10 +2,6 @@ import Joi from "joi";
 
 export const createProductValidator = Joi.object({
 
-    product_id: Joi.string()
-        .trim()
-        .required(),
-
     name: Joi.string()
         .trim()
         .min(2)

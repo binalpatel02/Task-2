@@ -3,16 +3,7 @@ import Product from "../model/product.model.js";
 // CREATE
 export const createProduct = async (data: any) => {
 
-    const existingProduct = await Product.findOne({
-        product_id: data.product_id
-    });
-
-    if (existingProduct) {
-        throw new Error("Product ID already exists");
-    }
-
     const product = await Product.create({
-        product_id: data.product_id,
         name: data.name,
         price: data.price,
         quantity: data.quantity
@@ -25,18 +16,15 @@ export const createProduct = async (data: any) => {
 // GET ALL
 export const getProducts = async () => {
 
-    const products = await Product.find();
-
-    return products;
+    return await Product.find()
+        .sort({ created_at: -1 });
 };
 
 
 // GET BY ID
-export const getProductById = async (productId: string) => {
+export const getProductById = async ( productId: string ) => {
 
-    const product = await Product.findOne({
-        product_id: productId
-    });
+    const product = await Product.findById(productId);
 
     if (!product) {
         throw new Error("Product not found");
@@ -47,14 +35,9 @@ export const getProductById = async (productId: string) => {
 
 
 // UPDATE
-export const updateProduct = async (
-    productId: string,
-    data: any
-) => {
+export const updateProduct = async ( productId: string, data: any ) => {
 
-    const product = await Product.findOneAndUpdate(
-        { product_id: productId },
-        data,
+    const product = await Product.findByIdAndUpdate( productId, data,
         {
             returnDocument: "after",
             runValidators: true
@@ -68,20 +51,15 @@ export const updateProduct = async (
     return product;
 };
 
-
+ 
 // DELETE
-export const deleteProduct = async (productId: string) => {
+export const deleteProduct = async ( productId: string ) => {
 
-    const product = await Product.findOneAndDelete({
-        product_id: productId
-    });
+    const product = await Product.findByIdAndDelete( productId );
 
     if (!product) {
         throw new Error("Product not found");
     }
 
-    return {
-        product_id: product.product_id,
-        message: "Product deleted successfully"
-    };
+    return product;
 };
