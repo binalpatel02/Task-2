@@ -1,34 +1,13 @@
-import type {
-    Request,
-    Response,
-    NextFunction
-} from "express";
-
-import {
-    createOrder,
-    getOrders,
-    getOrderById,
-    updateOrder,
-    deleteOrder
-} from "../service/order.service.js";
-
-import {
-    createOrderValidator,
-    updateOrderValidator
-} from "../validator/order.validator.js";
-
+import type { Request, Response, NextFunction } from "express";
+import { createOrder, getOrders, getOrderById, updateOrder, deleteOrder } from "../service/order.service.js";
+import { createOrderValidator, updateOrderValidator } from "../validator/order.validator.js";
 
 // CREATE
-export const createOrderController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const createOrderController = async ( req: Request, res: Response, next: NextFunction ) => {
 
     try {
 
-        const { error } =
-            createOrderValidator.validate(req.body);
+        const { error } = createOrderValidator.validate(req.body);
 
         if (error) {
             return res.status(400).json({
@@ -52,11 +31,7 @@ export const createOrderController = async (
 
 
 // GET ALL
-export const getOrdersController = async (
-    _req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const getOrdersController = async ( _req: Request, res: Response, next: NextFunction ) => {
 
     try {
 
@@ -71,19 +46,14 @@ export const getOrdersController = async (
         next(error);
     }
 };
-
+ 
 
 // GET BY ID
-export const getOrderByIdController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const getOrderByIdController = async ( req: Request, res: Response, next: NextFunction ) => {
 
     try {
 
-        const order =
-            await getOrderById(req.params.order_id as string);
+        const order = await getOrderById(req.params.order_id as string);
 
         return res.status(200).json({
             success: true,
@@ -97,16 +67,11 @@ export const getOrderByIdController = async (
 
 
 // UPDATE
-export const updateOrderController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const updateOrderController = async ( req: Request, res: Response, next: NextFunction ) => {
 
     try {
 
-        const { error } =
-            updateOrderValidator.validate(req.body);
+        const { error } = updateOrderValidator.validate(req.body);
 
         if (error) {
             return res.status(400).json({
@@ -115,11 +80,7 @@ export const updateOrderController = async (
             });
         }
 
-        const order =
-            await updateOrder(
-                req.params.order_id as string,
-                req.body
-            );
+        const order = await updateOrder( req.params.order_id as string, req.body );
 
         return res.status(200).json({
             success: true,
@@ -134,16 +95,12 @@ export const updateOrderController = async (
 
 
 // DELETE
-export const deleteOrderController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
+export const deleteOrderController = async ( req: Request, res: Response, next: NextFunction
 ) => {
 
     try {
 
-        const order =
-            await deleteOrder(req.params.order_id as string);
+        const order = await deleteOrder(req.params.order_id as string);
 
         return res.status(200).json({
             success: true,

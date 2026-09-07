@@ -23,9 +23,7 @@ export const getOrders = async () => {
 
 
 // GET BY ID
-export const getOrderById = async (
-    orderId: string
-) => {
+export const getOrderById = async ( orderId: string ) => {
 
     const order = await Order.findById(orderId);
 
@@ -38,14 +36,9 @@ export const getOrderById = async (
 
 
 // UPDATE
-export const updateOrder = async (
-    orderId: string,
-    data: any
-) => {
+export const updateOrder = async ( orderId: string, data: any ) => {
 
-    const order = await Order.findByIdAndUpdate(
-        orderId,
-        data,
+    const order = await Order.findByIdAndUpdate( orderId, data,
         {
             returnDocument: "after",
             runValidators: true
@@ -59,15 +52,11 @@ export const updateOrder = async (
     return order;
 };
 
-
+ 
 // DELETE
-export const deleteOrder = async (
-    orderId: string
-) => {
+export const deleteOrder = async ( orderId: string ) => {
 
-    const order = await Order.findByIdAndDelete(
-        orderId
-    );
+    const order = await Order.findByIdAndDelete( orderId );
 
     if (!order) {
         throw new Error("Order not found");
