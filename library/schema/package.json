@@ -20,6 +20,10 @@
     "./order": {
       "types": "./dist/schema/order/index.d.ts",
       "import": "./dist/schema/order/index.js"
+    },
+    "./orderItem": {
+        "types": "./dist/schema/orderItem/index.d.ts",
+        "import": "./dist/schema/orderItem/index.js"
     }
   },
   "scripts": {
