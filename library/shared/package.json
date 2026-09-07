@@ -8,6 +8,12 @@
     "build": "tsc"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/passport": "^1.0.17",
+    "@types/passport-jwt": "^4.0.1"
   }
 }

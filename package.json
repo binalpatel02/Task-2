@@ -5,5 +5,9 @@
   "workspaces": [
     "app/*",
     "library/*"
-  ]
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "npm run dev --workspaces --if-present"
+  }
 }
