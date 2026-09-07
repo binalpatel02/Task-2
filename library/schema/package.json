@@ -4,6 +4,24 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./user": {
+      "types": "./dist/schema/user/index.d.ts",
+      "import": "./dist/schema/user/index.js"
+    },
+    "./product": {
+      "types": "./dist/schema/product/index.d.ts",
+      "import": "./dist/schema/product/index.js"
+    },
+    "./order": {
+      "types": "./dist/schema/order/index.d.ts",
+      "import": "./dist/schema/order/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc"
   },

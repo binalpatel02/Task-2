@@ -1,3 +1,3 @@
-import { Order } from "@library/schema";
+import { Order } from "@library/schema/order";
 
 export default Order;

@@ -1,3 +1,3 @@
-import { Product } from "@library/schema";
+import { Product } from "@library/schema/product";
 
 export default Product;
