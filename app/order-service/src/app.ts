@@ -1,6 +1,6 @@
 import express from "express";
-
 import v1Router from "./api/v1/index.js";
+import { errorHandler } from "@library/shared";
 
 const app = express();
 
@@ -20,5 +20,7 @@ app.get("/health", (_req, res) => {
 
 // API
 app.use("/api/v1", v1Router);
+
+app.use(errorHandler);
 
 export default app;
