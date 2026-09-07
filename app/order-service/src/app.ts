@@ -19,9 +19,6 @@ app.get("/health", (_req, res) => {
 
 
 // API
-app.use(
-    "/api/v1",
-    v1Router
-);
+app.use("/api/v1", v1Router);
 
 export default app;
