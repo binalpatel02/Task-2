@@ -1,0 +1,21 @@
+import express from "express";
+
+import apiV1Router from "./api/v1/index.js";
+
+const app = express();
+
+app.use(express.json());
+
+// Health check
+app.get("/health", (_req, res) => {
+
+    res.status(200).json({
+        success: true,
+        message: "Error Service is running"
+    });
+
+});
+
+app.use("/api/v1", apiV1Router);
+
+export default app;

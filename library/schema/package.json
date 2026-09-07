@@ -24,6 +24,10 @@
     "./orderItem": {
         "types": "./dist/schema/orderItem/index.d.ts",
         "import": "./dist/schema/orderItem/index.js"
+    },
+    "./error": {
+        "types": "./dist/schema/error/index.d.ts",
+        "import": "./dist/schema/error/index.js"
     }
   },
   "scripts": {
