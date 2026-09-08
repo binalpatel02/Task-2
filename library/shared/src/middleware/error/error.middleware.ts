@@ -1,6 +1,6 @@
 import type {  NextFunction,  Request,  Response} from "express";
 
-import type { AppError } from "./error.types.js";
+import type { AppError } from "./error.types.js"
 
 export const errorHandler = ( error: AppError, _req: Request, res: Response, _next: NextFunction ) => {
     console.error("ERROR:", error);

@@ -11,7 +11,7 @@ export const createError = async ( data: ICreateError ) => {
 
     const error = await ErrorModel.create( errorData );
 
-    return errorResponseMapper(error);
+    return errorResponseMapper(error);      // give single object (err1)
 };
 
 
@@ -23,7 +23,7 @@ export const getErrors = async () => {
             created_at: -1
         });
 
-    return errors.map( errorResponseMapper );
+    return errors.map( errorResponseMapper );   // give array of errors (err1, err2)
 };
 
 
