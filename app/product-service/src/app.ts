@@ -1,6 +1,7 @@
 import express from "express";
-import { passport, errorHandler } from "@library/shared";
+import { errorHandler } from "@library/shared";
 import v1Router from "./api/v1/index.js";
+import passport from "passport";
 
 const app = express();
 

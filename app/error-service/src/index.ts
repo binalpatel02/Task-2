@@ -26,7 +26,7 @@ const startServer = async (): Promise<void> => {
     
     catch (error) {
 
-        console.error("Order Service startup failed:", error);
+        console.error("Error Service startup failed:", error);
 
         process.exit(1);
     }
