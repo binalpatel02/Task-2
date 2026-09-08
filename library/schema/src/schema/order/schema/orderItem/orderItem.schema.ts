@@ -1,8 +1,8 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
 export interface IOrderItem {
-    order_id: string;
-    product_id: string;
+    order_id: Types.ObjectId;   
+    product_id: Types.ObjectId; 
     quantity: number;
     unit_price: number;
     subtotal: number;
@@ -13,13 +13,13 @@ export interface IOrderItem {
 export const orderItemSchema = new Schema<IOrderItem>(
     {
         order_id: {
-            type: String,
+            type: Schema.Types.ObjectId, 
             required: true,
             index: true
         },
 
         product_id: {
-            type: String,
+            type: Schema.Types.ObjectId, 
             required: true,
             index: true
         },
@@ -27,24 +27,23 @@ export const orderItemSchema = new Schema<IOrderItem>(
         quantity: {
             type: Number,
             required: true,
-            min: 1
+            min: [1, "Quantity cannot be less than 1"]
         },
 
         unit_price: {
             type: Number,
             required: true,
-            min: 0
+            min: [0, "Price cannot be negative"]
         },
 
         subtotal: {
             type: Number,
             required: true,
-            min: 0
+            min: [0, "Subtotal cannot be negative"]
         }
     },
     {
         collection: "order_item",
-
         timestamps: {
             createdAt: "created_at",
             updatedAt: "updated_at"
@@ -52,7 +51,6 @@ export const orderItemSchema = new Schema<IOrderItem>(
     }
 );
 
-export const OrderItem = mongoose.model<IOrderItem>(
-    "OrderItem",
-    orderItemSchema
-);
+orderItemSchema.index({ order_id: 1, product_id: 1 }, { unique: true });
+
+export const OrderItem = mongoose.model<IOrderItem>("OrderItem", orderItemSchema);

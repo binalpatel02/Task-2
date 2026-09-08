@@ -18,11 +18,11 @@ export const createOrderItemValidator = Joi.object({
 
     unit_price: Joi.number()
         .min(0)
-        .required(),
+        .optional(),
 
     subtotal: Joi.number()
         .min(0)
-        .required()
+        .optional()
 });
 
 export const updateOrderItemValidator = Joi.object({
