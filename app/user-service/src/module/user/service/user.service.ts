@@ -1,5 +1,56 @@
 import bcrypt from "bcryptjs";
-import User from "../model/user.model.js";
+import jwt from "jsonwebtoken";
+import { User } from "@library/schema/user";
+
+interface ILoginRequest {
+    email: string;
+    password: string;
+}
+
+export const loginUser = async ({ email, password }: ILoginRequest) => {
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new Error("Invalid email or password");
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+       password,
+       user.password_hash as unknown as string
+    );
+
+    if (!isPasswordValid) {
+        throw new Error("Invalid email or password");
+    }
+
+    const JWT_SECRET = process.env.JWT_SECRET;
+
+    if (!JWT_SECRET) {
+        throw new Error("JWT_SECRET is not configured");
+    }
+
+    const token = jwt.sign(
+        {
+            user_id: user.user_id,
+            email: user.email
+        },
+        JWT_SECRET,
+        {
+            expiresIn: "1d"
+        }
+    );
+
+    return {
+        access_token: token,
+        token_type: "Bearer",
+        expires_in: "1d",
+        user: {
+            user_id: user.user_id,
+            email: user.email
+        }
+    };
+};
 
 export const createUser = async (data: any) => {
     const existingUser = await User.findOne({

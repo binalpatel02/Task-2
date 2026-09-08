@@ -1,7 +1,37 @@
 import type { NextFunction, Request, Response } from "express";
-import { createUser, getUsers, getUserById, updateUser, deleteUser } from "../service/user.service.js";
-import { createUserValidator } from "../validator/user.validator.js";
+import {loginUser, createUser, getUsers, getUserById, updateUser, deleteUser } from "../service/user.service.js";
+import { createUserValidator, loginValidator } from "../validator/user.validator.js";
 import { userResponseMapper } from "../mapper/user.mapper.js";
+
+// LOGIN
+export const loginUserController = async ( req: Request, res: Response, next: NextFunction ) => {
+    try {
+        const { error } = loginValidator.validate(req.body);
+
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: error.details[0].message
+            });
+        }
+
+        const { email, password } = req.body;
+
+        const result = await loginUser({
+            email,
+            password
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Login successful",
+            data: result
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
 
 // 1. CREATE USER
 export const createUserController = async ( req: Request, res: Response, next: NextFunction ) => {

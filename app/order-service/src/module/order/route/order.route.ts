@@ -2,7 +2,11 @@ import { Router } from "express";
 
 import { createOrderController, getOrdersController, getOrderByIdController, updateOrderController, deleteOrderController } from "../controller/order.controller.js";
 
+import { authenticate } from "@library/shared";
+
 const router = Router();
+
+router.use(authenticate);
 
 router.post("/", createOrderController);
 

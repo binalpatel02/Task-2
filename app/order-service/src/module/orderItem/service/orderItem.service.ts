@@ -3,9 +3,15 @@ import Order from "../../order/model/order.model.js";
 
 const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || "http://127.0.0.1:3001";
 
-const checkProductExists = async (productId: string) => {
+//  Updated to receive the token parameter
+const checkProductExists = async (productId: string, token?: string) => {
     try {
-        const response = await fetch(`${PRODUCT_SERVICE_URL}/api/v1/products/${productId}`);
+        const response = await fetch(`${PRODUCT_SERVICE_URL}/api/v1/products/${productId}`, {
+            headers: {
+                //  Forward the Bearer token to authorize the internal fetch call
+                "Authorization": token ? token : ""
+            }
+        });
 
         if (!response.ok) {
             throw new Error(`Product not found (Status: ${response.status})`);
@@ -24,14 +30,16 @@ const checkProductExists = async (productId: string) => {
 };
 
 // CREATE
-export const createOrderItem = async (data: any) => {
+// accept the token forwarded by the controller
+export const createOrderItem = async (data: any, token?: string) => {
     const order = await Order.findById(data.order_id);
 
     if (!order) {
         throw new Error("Order not found");
     }
 
-    const product = await checkProductExists(data.product_id);
+    // Pass the token directly into the validation checker
+    const product = await checkProductExists(data.product_id, token);
     const unitPrice = product.price;
     const subtotal = data.quantity * unitPrice;
 
@@ -81,7 +89,7 @@ export const updateOrderItem = async (orderItemId: string, data: any) => {
             subtotal
         },
         {
-            new: true, 
+            returnDocument: "after", 
             runValidators: true
         }
     );

@@ -32,3 +32,13 @@ export const createUserValidator = Joi.object({
     .min(6),
 
 });
+
+// login
+export const loginValidator = Joi.object({
+    email: Joi.string()
+        .email()
+        .required(),
+
+    password: Joi.string()
+        .required()
+});
