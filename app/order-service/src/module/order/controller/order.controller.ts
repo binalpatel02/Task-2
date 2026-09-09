@@ -16,7 +16,9 @@ export const createOrderController = async ( req: Request, res: Response, next: 
             });
         }
 
-        const order = await createOrder(req.body);
+        const token = req.headers.authorization;
+        
+        const order = await createOrder(req.body, token);
 
         return res.status(201).json({
             success: true,
