@@ -1,12 +1,10 @@
 import express from "express";
 import apiV1Router from "./api/v1/index.js";
 import  { errorHandler } from "@library/shared";
-import passport from "passport";
 
 const app = express();
 
 app.use(express.json());
-app.use(passport.initialize());
 
 // Health check
 app.get("/health", (_req, res) => {
