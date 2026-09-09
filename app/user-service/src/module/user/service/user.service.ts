@@ -12,7 +12,7 @@ export const loginUser = async ({ email, password }: ILoginRequest) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-        throw new Error("Invalid email or password");
+        throw new Error("Invalid email");
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -21,7 +21,7 @@ export const loginUser = async ({ email, password }: ILoginRequest) => {
     );
 
     if (!isPasswordValid) {
-        throw new Error("Invalid email or password");
+        throw new Error("Invalid password");
     }
 
     const JWT_SECRET = process.env.JWT_SECRET;
