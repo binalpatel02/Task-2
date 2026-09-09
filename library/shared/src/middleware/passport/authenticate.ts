@@ -6,10 +6,13 @@ initJwtStrategy(passport);
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
 
-    passport.authenticate("jwt", { session: false }, (err: any, user: any) => {
+    passport.authenticate("jwt", { session: false }, (err: any, user: any, info: any) => {
 
         if (err) return next(err);
-        if (!user) return res.status(401).json({ error: "Unauthorized access token" });
+        if (!user) {
+            console.log("JWT Validation Failed Reason:", info); 
+            return res.status(401).json({ error: "Unauthorized access token" });
+        }
         
         req.user = user;
         return next();
