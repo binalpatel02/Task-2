@@ -1,8 +1,8 @@
-import mongoose, { model, Model, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
 export interface IUser {
-    user_id: string;
+    _id: string;
     first_name: string;
     last_name: string;
     mobile_number: string;
@@ -12,16 +12,14 @@ export interface IUser {
     updated_at?: Date;
 }
 
-export const userSchema: Schema<IUser, Model<IUser>> = new mongoose.Schema<IUser, Model<IUser>>(
+const userSchema = new Schema<IUser>(
     {
-        user_id: {
-            type: String,
-            default: () => uuidv4(), 
-            unique: true,
-            index: true
+        _id: {
+                type: String,
+                default: () => uuidv4()
         },
 
-        first_name: {
+         first_name: {
             type: String,
             required: true,
             trim: true
@@ -59,6 +57,11 @@ export const userSchema: Schema<IUser, Model<IUser>> = new mongoose.Schema<IUser
             updatedAt: "updated_at"
         }
     }
+);  
+
+export const User = mongoose.model<IUser>(
+    "User",
+    userSchema
 );
 
-export const User: Model<IUser> = model<IUser>("User", userSchema);
+export { userSchema };

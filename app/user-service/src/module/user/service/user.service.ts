@@ -32,7 +32,7 @@ export const loginUser = async ({ email, password }: ILoginRequest) => {
 
     const token = jwt.sign(
         {
-            user_id: user.user_id,
+            user_id: user._id,
             email: user.email
         },
         JWT_SECRET,
@@ -46,7 +46,7 @@ export const loginUser = async ({ email, password }: ILoginRequest) => {
         token_type: "Bearer",
         expires_in: "1d",
         user: {
-            user_id: user.user_id,
+            user_id: user._id,
             email: user.email
         }
     };
