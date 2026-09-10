@@ -1,7 +1,9 @@
 import mongoose, { Schema } from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 
 export interface IError {
-    method: string;
+    _id: string;
+     method: string;
     url: string;
     header?: Record<string, unknown>;
     extra?: Record<string, unknown>;
@@ -11,7 +13,12 @@ export interface IError {
 
 const errorSchema = new Schema<IError>(
     {
-        method: {
+        _id: {
+                type: String,
+                default: () => uuidv4()
+        },
+
+         method: {
             type: String,
             required: true
         },
@@ -44,9 +51,11 @@ const errorSchema = new Schema<IError>(
             updatedAt: false
         }
     }
-);
+); 
 
 export const ErrorModel = mongoose.model<IError>(
     "Error",
     errorSchema
 );
+
+export { errorSchema };

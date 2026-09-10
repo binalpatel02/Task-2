@@ -1,25 +1,30 @@
-import mongoose, { Schema, Types } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 
 export interface IOrderItem {
-    order_id: Types.ObjectId;   
-    product_id: Types.ObjectId; 
+    _id: string;
+    order_id: string;   
+    product_id: string; 
     quantity: number;
     unit_price: number;
     subtotal: number;
-    created_at?: Date;
-    updated_at?: Date;
 }
 
-export const orderItemSchema = new Schema<IOrderItem>(
+const orderItemSchema = new Schema<IOrderItem>(
     {
+        _id: {
+                type: String,
+                default: () => uuidv4()
+        },
+
         order_id: {
-            type: Schema.Types.ObjectId, 
+            type: String, 
             required: true,
             index: true
         },
 
         product_id: {
-            type: Schema.Types.ObjectId, 
+            type: String, 
             required: true,
             index: true
         },
@@ -54,3 +59,5 @@ export const orderItemSchema = new Schema<IOrderItem>(
 orderItemSchema.index({ order_id: 1, product_id: 1 }, { unique: true });
 
 export const OrderItem = mongoose.model<IOrderItem>("OrderItem", orderItemSchema);
+
+export { orderItemSchema };

@@ -1,7 +1,8 @@
 import mongoose, { Schema } from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 
 export interface IProduct {
-    product_id: string;
+    _id: string;
     name: string;
     price: number;
     quantity: number;
@@ -11,6 +12,11 @@ export interface IProduct {
 
 const productSchema = new Schema<IProduct>(
     {
+        _id: {
+                type: String,
+                default: () => uuidv4()
+        },
+
         name: {
             type: String,
             required: true,
