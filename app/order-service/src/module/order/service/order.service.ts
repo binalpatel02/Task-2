@@ -1,4 +1,5 @@
 import Order from "../model/order.model.js";
+import OrderItem from "../../orderItem/model/orderItem.model.js"; 
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://127.0.0.1:3000";
 
@@ -26,6 +27,49 @@ const checkUserExists = async (userId: string, token?: string) => {
     }
 };
 
+// helper function for total_amount
+export const updateOrderTotal = async (orderId: string) => {
+
+    const result = await OrderItem.aggregate([
+        {
+            $match: {
+                order_id: orderId
+            }
+        },
+        {
+            $group: {
+                _id: "$order_id",
+                total_amount: {
+                    $sum: "$subtotal"
+                }
+            }
+        }
+    ]);
+
+    const totalAmount =
+        result.length > 0
+            ? Math.max(0, result[0].total_amount)
+            : 0;
+
+    const order = await Order.findByIdAndUpdate(
+        orderId,
+        {
+            total_amount: totalAmount
+        },
+        {
+            returnDocument: "after"
+        }
+    );
+
+    if (!order) {
+        const error = new Error("Order not found") as any;
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return order;
+};
+
 
 // CREATE
 export const createOrder = async (data: any, token?: string) => {
@@ -34,7 +78,7 @@ export const createOrder = async (data: any, token?: string) => {
 
         const order = await Order.create({
             user_id: data.user_id,
-            total_amount: data.total_amount,
+            total_amount: 0, 
             order_status: data.order_status || "PENDING"
         });
 
@@ -54,16 +98,42 @@ export const createOrder = async (data: any, token?: string) => {
 
 // GET ALL
 export const getOrders = async () => {
-    return await Order.find().sort({ created_at: -1 });
+    const orders = await Order.find().sort({ created_at: -1 });
+
+    // Dynamically sync totals for all listed orders before responding
+    const syncedOrders = await Promise.all(orders.map(async (order) => {
+        const items = await OrderItem.find({ order_id: order._id });
+        const total = items.reduce((sum, item) => sum + item.subtotal, 0);
+        
+        order.total_amount = total;
+        await order.save();
+        return order;
+    }));
+
+    return syncedOrders;
 };
 
 
 // GET BY ID
 export const getOrderById = async ( orderId: string ) => {
+    // Fetch all items matching this order ID
+    const items = await OrderItem.find({ order_id: orderId });
 
-    const order = await Order.findById(orderId);
+    // Calculate the total amount sum
+    const calculatedTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
 
-    if (!order) throw new Error("Order not found");
+    // Update the total_amount in the database right before returning it
+    const order = await Order.findByIdAndUpdate(
+        orderId,
+        { total_amount: calculatedTotal },
+        { returnDocument: "after" }
+    );
+
+    if (!order) {
+        const error = new Error("Order not found") as any;
+        error.statusCode = 404;
+        throw error;
+    }
 
     return order;
 };
@@ -79,7 +149,18 @@ export const updateOrder = async ( orderId: string, data: any ) => {
         }
     );
 
-    if (!order) throw new Error("Order not found");
+    if (!order) {
+        const error = new Error("Order not found") as any;
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Recalculate total after update to ensure integrity
+    const items = await OrderItem.find({ order_id: orderId });
+    const calculatedTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+    order.total_amount = calculatedTotal;
+    await order.save();
+
     return order;
 };
 
@@ -89,7 +170,13 @@ export const deleteOrder = async ( orderId: string ) => {
 
     const order = await Order.findByIdAndDelete( orderId );
 
-    if (!order) throw new Error("Order not found");
+    if (!order) {
+        const error = new Error("Order not found") as any;
+        error.statusCode = 404;
+        throw error;
+    }
+
+    await OrderItem.deleteMany({ order_id: orderId });
 
     return order;
 };
