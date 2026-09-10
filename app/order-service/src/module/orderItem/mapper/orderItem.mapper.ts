@@ -1,7 +1,7 @@
 export const orderItemResponseMapper = ( orderItem: any ) => {
 
     return {
-        order_item_id: orderItem.order_item_id,
+        order_item_id: orderItem._id,
         order_id: orderItem.order_id,
         product_id: orderItem.product_id,
         quantity: orderItem.quantity,
