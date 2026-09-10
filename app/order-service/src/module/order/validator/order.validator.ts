@@ -2,13 +2,11 @@ import Joi from "joi";
 
 export const createOrderValidator = Joi.object({
     user_id: Joi.string()
-        .hex()
-        .length(24)
         .required(),
 
     total_amount: Joi.number()
         .min(0)
-        .required(),
+        .optional(),
 
     order_status: Joi.string()
         .valid(
