@@ -25,8 +25,9 @@ const orderSchema = new Schema<IOrder>(
         total_amount: {
             type: Number,
             required: true,
+            default: 0,
             min: 0
-        },
+        },        
 
         order_status: {
             type: String,
