@@ -1,6 +1,6 @@
 export const orderResponseMapper = (order: any) => {
     return {
-        order_id: order.order_id,
+        order_id: order._id,
         user_id: order.user_id,
         total_amount: order.total_amount,
         order_status: order.order_status,
