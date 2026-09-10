@@ -1,17 +1,16 @@
 import ErrorModel from "../model/error.model.js";
 
-import { createErrorMapper, errorResponseMapper } from "../mapper/error.mapper.js";
+import { createErrorMapper } from "../mapper/error.mapper.js";
 
-import type { ICreateError } from "../interface/error.interface.js";
+import { IError } from "@library/schema/error";
 
-
-export const createError = async ( data: ICreateError ) => {
+export const createError = async ( data: IError ) => {
 
     const errorData = createErrorMapper(data);
 
     const error = await ErrorModel.create( errorData );
 
-    return errorResponseMapper(error);      // give single object (err1)
+    return error;      
 };
 
 
@@ -23,7 +22,7 @@ export const getErrors = async () => {
             created_at: -1
         });
 
-    return errors.map( errorResponseMapper );   // give array of errors (err1, err2)
+    return errors;  
 };
 
 
@@ -35,7 +34,7 @@ export const getErrorById = async ( errorId: string ) => {
         throw new Error("Error not found");
     }
 
-    return errorResponseMapper(error);
+    return error;
 };
 
 
@@ -53,7 +52,7 @@ export const updateErrorById = async (errorId: string, data: any) => {
         throw new Error("Error not found");
     }
 
-    return errorResponseMapper(error);
+    return error;
 }
 
 
@@ -66,5 +65,5 @@ export const deleteErrorById = async ( errorId: string ) => {
         throw new Error("Error not found");
     }
 
-    return errorResponseMapper(error);
+    return error;
 };

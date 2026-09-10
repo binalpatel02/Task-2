@@ -1,28 +1,11 @@
-import type { ICreateError, IErrorResponse } from "../interface/error.interface.js";
-
-
 // Request → Database
-export const createErrorMapper = ( data: ICreateError ) => {
-
+export const createErrorMapper = ( error: any ) => {
     return {
-        method: data.method,
-        url: data.url,
-        header: data.header ?? {},
-        extra: data.extra ?? {},
-        data: data.data ?? {}
-    };
-};
-
-
-// Database → Response
-export const errorResponseMapper = ( error: any ): IErrorResponse => {
-
-    return {
+        error_id: error._id,
         method: error.method,
         url: error.url,
         header: error.header ?? {},
         extra: error.extra ?? {},
-        data: error.data ?? {},
-        created_at: error.created_at
+        data: error.data ?? {}
     };
 };
