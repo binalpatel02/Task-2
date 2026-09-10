@@ -18,7 +18,7 @@ export const createOrderItemController = async ( req: Request, res: Response, ne
 
         //  Grab the token from the incoming client request headers
         const token = req.headers.authorization;
-
+        
         //  Pass BOTH req.body and the token to your service layer
         const orderItem = await createOrderItem(req.body, token);
 
@@ -63,7 +63,7 @@ export const getOrderItemByIdController = async ( req: Request, res: Response, n
             success: true,
             data: orderItem
         });
-
+        
     } catch (error) {
         next(error);
     }
