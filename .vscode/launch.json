@@ -1,0 +1,56 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug User Service",
+      "runtimeArgs": ["--import", "tsx"],
+      "args": ["src/index.ts"],
+      "cwd": "${workspaceFolder}/app/user-service",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Order Service",
+      "runtimeArgs": ["--import", "tsx"],
+      "args": ["src/index.ts"],
+      "cwd": "${workspaceFolder}/app/order-service",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Product Service",
+      "runtimeArgs": ["--import", "tsx"],
+      "args": ["src/index.ts"],
+      "cwd": "${workspaceFolder}/app/product-service",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Error Service",
+      "runtimeArgs": ["--import", "tsx"],
+      "args": ["src/index.ts"],
+      "cwd": "${workspaceFolder}/app/error-service",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug All Services",
+      "configurations": [
+        "Debug User Service",
+        "Debug Order Service",
+        "Debug Product Service",
+        "Debug Error Service"
+      ]
+    }
+  ]
+}
