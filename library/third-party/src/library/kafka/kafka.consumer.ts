@@ -5,7 +5,7 @@ export const createKafkaConsumer = async ( groupId: string ) => {
 
     const kafka = getKafka();
 
-    const consumer: Consumer = kafka.consumer({ groupId });
+    const consumer: Consumer = kafka.consumer({ groupId, allowAutoTopicCreation: true });
 
     await consumer.connect();
 
@@ -15,37 +15,31 @@ export const createKafkaConsumer = async ( groupId: string ) => {
 };
 
 
-export const consumeKafkaMessage = async ( groupId: string, topic: string,
-    handler: ( message: any ) => Promise<void>
+export const consumeKafkaMessage = async ( groupId: string, topic: string | string[],
+    handler: ( message: any, topic: string ) => Promise<void> 
 ) => {
 
     const consumer = await createKafkaConsumer(groupId);
 
-    await consumer.subscribe({ topic, fromBeginning: false });
+     if (Array.isArray(topic)) {
+        await consumer.subscribe({ topics: topic, fromBeginning: false });
+    } else {
+        await consumer.subscribe({ topic, fromBeginning: false });
+    }
 
     await consumer.run({
-
-        eachMessage: async ({ topic, partition, message }) => {
-
+        eachMessage: async ({ topic: currentTopic, partition, message }) => {
             try {
-
                 const value = message.value?.toString();
-
-                if (!value) {
-                    return;
-                }
+                if (!value) return;
 
                 const data = JSON.parse(value);
 
-                await handler(data);
-
+                await handler(data, currentTopic);
             } catch (error) {
-
-                console.error(`Kafka consumer error [${topic}]:`, error);
-
+                console.error(`Kafka consumer error [${currentTopic}]:`, error);
             }
         }
-
     });
 
     return consumer;
