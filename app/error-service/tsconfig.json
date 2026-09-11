@@ -25,6 +25,7 @@
   
   "references": [
     { "path": "../../library/schema" },
-    { "path": "../../library/shared" }
+    { "path": "../../library/shared" },
+    { "path": "../../library/third-party"}
   ]
 }

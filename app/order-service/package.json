@@ -20,6 +20,7 @@
   "devDependencies": {
     "@library/schema": "*",
     "@library/shared": "*",
+    "@library/third-party": "*",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.6",
     "@types/node": "^24.0.0",

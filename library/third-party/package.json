@@ -1,5 +1,5 @@
 {
-  "name": "third-party",
+  "name": "@library/third-party",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -16,6 +16,10 @@
     "./rabbitmq": {
       "types": "./dist/library/rabbitmq/index.d.ts",
       "import": "./dist/library/rabbitmq/index.js"
+    },
+    "./kafka": {
+      "types": "./dist/library/kafka/index.d.ts",
+      "import": "./dist/library/kafka/index.js"
     }
   },
   "scripts": {
