@@ -1,4 +1,6 @@
 import Product from "../model/product.model.js";
+import { publishKafkaMessage } from "@library/third-party/kafka";
+import { PRODUCT_TOPICS } from "../../../library/kafka/topic.js";
 
 // CREATE
 export const createProduct = async (data: any) => {
@@ -26,6 +28,17 @@ export const createProduct = async (data: any) => {
         price: productPrice,
         quantity: incomingQuantity
     });
+
+    await publishKafkaMessage (
+        PRODUCT_TOPICS.CREATED,
+        {
+            product_id: product._id.toString(),
+            name: product.name,
+            price: product.price,
+            qauntity: product.quantity
+        },
+        product._id.toString()
+    )
 
     console.log(`Created a unique product slot for [${product.name}] at price point: $${product.price}`);
     return product;
@@ -82,6 +95,18 @@ export const updateProduct = async ( productId: string, data: any ) => {
     if (data.price !== undefined) product.price = data.price;
 
     await product.save();
+
+    await publishKafkaMessage(
+        PRODUCT_TOPICS.UPDATED,
+        {
+            product_id: product._id.toString(),
+            name: product.name,
+            price: product.price,
+            qauntity: product.quantity
+        },
+        productId
+    )
+
     return product;
 };
 
@@ -97,5 +122,17 @@ export const deleteProduct = async ( productId: string ) => {
     console.log(`Removing product document [${product.name}]. Clearing out its remaining ${product.quantity} items from tracking indexes.`);
     
     await Product.findByIdAndDelete(productId);
+    
+    await publishKafkaMessage(
+        PRODUCT_TOPICS.DELETED,
+        {
+            product_id: product._id.toString(),
+            name: product.name,
+            price: product.price,
+            qauntity: product.quantity
+        },
+        productId
+    )
+
     return product;
 };
