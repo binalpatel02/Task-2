@@ -1,8 +1,7 @@
 import "dotenv/config";
-
 import app from "./app.js";
-
 import { connectDatabase } from "@library/schema";
+import { startUserConsumer, startProductConsumer} from "../src/library/index.js"
 
 const PORT = Number(process.env.PORT) || 3002;
 
@@ -10,7 +9,7 @@ const MONGO_URI = process.env.MONGO_URI;
 
 const startServer = async (): Promise<void> => {
 
-    try {
+    try {        
 
         if (!MONGO_URI) {
             throw new Error( "MONGO_URI is not defined" );
@@ -22,7 +21,22 @@ const startServer = async (): Promise<void> => {
             console.log(`Order Service running on port ${PORT}`);
         });
 
-    }
+        startUserConsumer()
+            .then(() => {
+                console.log("User Kafka consumer started");
+            })
+            .catch((error) => {
+                console.error("Failed to start User Kafka consumer:", error);
+            });
+
+        startProductConsumer()
+            .then(() => {
+                console.log("Product Kafka consumer started");
+            })
+            .catch((error) => {
+                console.error("Failed to start Product Kafka consumer:", error);
+            });
+        }
     
     catch (error) {
 
