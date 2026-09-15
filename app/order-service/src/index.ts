@@ -1,7 +1,7 @@
 import "dotenv/config";
 import app from "./app.js";
 import { connectDatabase } from "@library/schema";
-import { startUserConsumer, startProductConsumer} from "../src/library/index.js"
+import { startUserConsumer, startProductConsumer } from "./library/index.js";
 
 const PORT = Number(process.env.PORT) || 3002;
 
