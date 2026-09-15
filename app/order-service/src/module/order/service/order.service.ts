@@ -46,10 +46,7 @@ export const updateOrderTotal = async (orderId: string) => {
         }
     ]);
 
-    const totalAmount =
-        result.length > 0
-            ? Math.max(0, result[0].total_amount)
-            : 0;
+    const totalAmount = result.length > 0 ? Math.max(0, result[0].total_amount) : 0;
 
     const order = await Order.findByIdAndUpdate(
         orderId,
@@ -76,6 +73,12 @@ export const createOrder = async (data: any, token?: string) => {
     try {
         const user = await checkUserExists(data.user_id, token);
 
+        if (!user) {
+            const customError = new Error("The provided user_id is invalid or does not exist.") as any;
+            customError.statusCode = 404; 
+            throw customError;
+        }
+
         const order = await Order.create({
             user_id: data.user_id,
             total_amount: 0, 
@@ -85,7 +88,7 @@ export const createOrder = async (data: any, token?: string) => {
         return order;
 
     } catch (error: any) {
-        if (error.message.includes("User not found")) {
+        if (error.message && error.message.includes("User not found")) {
             const customError = new Error("The provided user_id is invalid or does not exist.") as any;
             customError.statusCode = 404; 
             throw customError;
@@ -164,6 +167,16 @@ export const updateOrder = async ( orderId: string, data: any ) => {
     return order;
 };
 
+
+export const updateOneOrder = async (orderId: string) => {
+    const order = await Order.findById( orderId);
+
+    if(!order) {
+        const error= new Error("Order not found") as any;
+        error.statusCode = 404;
+        throw error;
+    }
+}
  
 // DELETE
 export const deleteOrder = async ( orderId: string ) => {
