@@ -42,19 +42,57 @@ export const createOrderItem = async (data: any, token?: string) => {
 
     // Check Product
     const product = await checkProductExists( data.product_id,  token );
-    // Calculate subtotal
-    const subtotal = Number(data.quantity) *  Number(product.price);
+
+    const requestedQuantity = Number(data.quantity);
+    const availableQuantity = Number(product.quantity);
+
+    if (requestedQuantity > availableQuantity) {
+
+        const error = new Error( `Insufficient stock. Requested: ${requestedQuantity}, Available: ${availableQuantity}` ) as any;
+
+        error.statusCode = 400;
+
+        throw error;
+    }
+
+    const subtotal = requestedQuantity * Number(product.price);
 
     // Create OrderItem
     const orderItem = await OrderItem.create({
         order_id: data.order_id,
         product_id: data.product_id,
-        quantity: data.quantity,
-        unit_price: product.price,
+        quantity: requestedQuantity,
+        unit_price: Number(product.price),
         subtotal
     });
 
-    // Recalculate Order total
+    const newQuantity = availableQuantity - requestedQuantity;
+
+    const response = await fetch( `${PRODUCT_SERVICE_URL}/api/v1/products/${data.product_id}`,
+        {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": token ? token : ""
+            },
+            body: JSON.stringify({
+                quantity: newQuantity
+            })
+        }
+    );
+
+    if (!response.ok) {
+
+        // If stock update failed, remove the Order Item that we just created
+        await OrderItem.findByIdAndDelete( orderItem._id );
+
+        const error = new Error( `Failed to update product stock (Status: ${response.status})` ) as any;
+
+        error.statusCode = 500;
+
+        throw error;
+    }
+
     await updateOrderTotal(data.order_id);
 
     return orderItem;
@@ -106,7 +144,7 @@ export const updateOrderItem = async (orderItemId: string, data: any) => {
 
     const newOrderId =  data.order_id ?? existingItem.order_id;
 
-    // If order_id is changed, make sure new order exists
+    // If order_id is changed, check new order exists
     if (newOrderId !== oldOrderId) {
 
         const newOrder = await Order.findById(newOrderId);
