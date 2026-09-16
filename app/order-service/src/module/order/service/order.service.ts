@@ -167,16 +167,6 @@ export const updateOrder = async ( orderId: string, data: any ) => {
     return order;
 };
 
-
-export const updateOneOrder = async (orderId: string) => {
-    const order = await Order.findById( orderId);
-
-    if(!order) {
-        const error= new Error("Order not found") as any;
-        error.statusCode = 404;
-        throw error;
-    }
-}
  
 // DELETE
 export const deleteOrder = async ( orderId: string ) => {
