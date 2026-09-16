@@ -10,7 +10,15 @@ const loginRateLimit = rateLimit({
     keyPrefix: "user-login",
 });
 
+const userRateLimit = rateLimit({
+    windowSeconds: 60,
+    maxRequests: 20,
+    keyPrefix: "user-api"
+})
+
 router.post( "/login", loginRateLimit, loginUserController );
+
+router.use(userRateLimit);
 router.post("/", createUserController);
 router.get("/", getUsersController);
 router.get("/:id", getUserByIdController);
