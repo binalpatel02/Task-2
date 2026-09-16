@@ -29,18 +29,23 @@ export const consumeKafkaMessage = async ( groupId: string, topic: string | stri
 
     await consumer.run({
         eachMessage: async ({ topic: currentTopic, partition, message }) => {
-            try {
-                const value = message.value?.toString();
-                if (!value) return;
 
-                const data = JSON.parse(value);
+        console.log("KAFKA MESSAGE RECEIVED");
+        console.log("TOPIC:", currentTopic);
 
-                await handler(data, currentTopic);
-            } catch (error) {
-                console.error(`Kafka consumer error [${currentTopic}]:`, error);
-            }
-        }
-    });
+        const value = message.value?.toString();
+
+        console.log("RAW MESSAGE:", value);
+
+        if (!value) return;
+
+        const data = JSON.parse(value);
+
+        console.log("PARSED MESSAGE:", data);
+
+        await handler(data, currentTopic);
+    }
+});
 
     return consumer;
 };

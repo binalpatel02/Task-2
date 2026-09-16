@@ -25,7 +25,7 @@ export const publishKafkaMessage = async ( topic: string, message: unknown, key?
 
     const kafkaProducer = await getKafkaProducer();
 
-    await kafkaProducer.send({
+    const response = await kafkaProducer.send({
         topic,
 
         messages: [
@@ -35,4 +35,5 @@ export const publishKafkaMessage = async ( topic: string, message: unknown, key?
             }
         ]
     });
+    console.log("Kafka accepted payload details:", response); 
 };
