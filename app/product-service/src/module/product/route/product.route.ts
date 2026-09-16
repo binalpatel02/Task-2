@@ -1,12 +1,16 @@
 import { Router } from "express";
-
 import { createProductController, getProductsController, getProductByIdController, updateProductController, deleteProductController } from "../controller/product.controller.js";
-
-import { authenticate } from "@library/shared";
+import {rateLimit, authenticate } from "@library/shared";
 
 const router = Router();
 
-router.use(authenticate);
+const productRateLimit = rateLimit({
+    windowSeconds: 120,
+    maxRequests: 60,
+    keyPrefix: "product-api"
+})
+
+router.use(authenticate, productRateLimit);
 
 router.post("/", createProductController);
 
