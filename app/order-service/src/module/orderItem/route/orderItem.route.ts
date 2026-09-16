@@ -1,12 +1,16 @@
 import { Router } from "express";
-
 import { createOrderItemController, getOrderItemsController, getOrderItemByIdController, updateOrderItemController, deleteOrderItemController } from "../controller/orderItem.controller.js";
-
-import { authenticate } from "@library/shared";
+import { rateLimit, authenticate } from "@library/shared";
 
 const router = Router();
 
-router.use(authenticate);
+const orderItemRateLimit = rateLimit({
+    windowSeconds: 60,
+    maxRequests: 30,
+    keyPrefix: "orderItem-api"
+})
+
+router.use(authenticate, orderItemRateLimit);
 
 router.post("/", createOrderItemController);
 
