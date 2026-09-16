@@ -9,11 +9,9 @@ interface RateLimitOptions {
 
 export const rateLimit = ({ windowSeconds, maxRequests, keyPrefix = "rate-limit",}: RateLimitOptions) => {
 
-    return async ( req: Request, res: Response, next: NextFunction): Promise<void> => {
+    return async ( _req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const clientIp = req.ip || req.headers["x-forwarded-for"] ?.toString() .split(",")[0] || "unknown";
-
-            const key = `${keyPrefix}:${clientIp}`;
+            const key =  keyPrefix;
 
             const redis = await getRedisClient();
 
