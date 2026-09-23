@@ -1,123 +1,149 @@
 import type { NextFunction, Request, Response } from "express";
-import { createProduct, getProducts, getProductById, updateProduct, deleteProduct } from "../service/product.service.js";
+import { productService } from "../service/product.service.js";
 import { createProductValidator, updateProductValidator } from "../validator/product.validator.js";
 import { productResponseMapper } from "../mapper/product.mapper.js";
-
+import { AbstractController, IController } from "@library/shared";
 
 // CREATE
-export const createProductController = async ( req: Request, res: Response, next: NextFunction ) => {
+export class CreateProductController extends AbstractController implements IController {
 
-    try {
+    async execute ( req: Request, res: Response, next: NextFunction ) {
 
-        const { error } = createProductValidator.validate(req.body);
+        try {
 
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                message: error.details[0].message
+            const { error } = createProductValidator.validate(req.body);
+
+            if (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: error.details[0].message
+                });
+            }
+
+            const product = await productService.create(req.body);
+
+            const response = this.created(productResponseMapper(product));
+
+            return res.status(response.statusCode).json({
+                success: true,
+                message: "Product created successfully",
+                data: response.data
             });
+
+        } catch (error) {
+            next(error);
         }
-
-        const product = await createProduct(req.body);
-
-        return res.status(201).json({
-            success: true,
-            message: "Product created successfully",
-            data: productResponseMapper(product)
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
+}};
 
 
 // GET ALL
-export const getProductsController = async ( req: Request, res: Response, next: NextFunction ) => {
+export class GetProductsController extends AbstractController implements IController {
+    async execute ( req: Request, res: Response, next: NextFunction ) {
 
-    try {
+        try {
 
-        const products = await getProducts();
+            const products = await productService.getAll();
 
-        if (products.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No products found"
+            if (products.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "No products found"
+                });
+            }
+
+            const response = this.success(products.map(productResponseMapper));
+
+            return res.status(response.statusCode).json({
+                success: true,
+                data: response.data
             });
+
+        } catch (error) {
+            next(error);
         }
-
-        return res.status(200).json({
-            success: true,
-            data: products.map(productResponseMapper)
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
+}};
 
 
 // GET BY ID
-export const getProductByIdController = async ( req: Request, res: Response, next: NextFunction ) => {
+export class GetProductByIdController extends AbstractController implements IController {
+    async execute ( req: Request, res: Response, next: NextFunction ) {
 
-    try {
+        try {
+    
+            const product = await productService.getById(req.params.product_id as string);
 
-        const product = await getProductById(req.params.product_id as string);
+            const response = this.success(productResponseMapper(product));
+    
+            return res.status(response.statusCode).json({
+                success: true,
+                message: "Product fetched successfully",
+                data: response.data
+            });
 
-        return res.status(200).json({
-            success: true,
-            message: "Product fetched successfully",
-            data: productResponseMapper(product)
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
+        } catch (error) {
+            next(error);
+        }
+}};
 
 
 // UPDATE
-export const updateProductController = async ( req: Request, res: Response, next: NextFunction ) => {
+export class UpdateProductController extends AbstractController implements IController{
+    async execute ( req: Request, res: Response, next: NextFunction )  {
 
-    try {
+        try {
 
-        const { error } = updateProductValidator.validate(req.body);
+            const { error } = updateProductValidator.validate(req.body);
 
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                message: error.details[0].message
+            if (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: error.details[0].message
+                });
+            }
+
+            const product = await productService.update(req.params.product_id as string, req.body);
+
+            const response = this.success(productResponseMapper(product));
+
+            return res.status(response.statusCode).json({
+                success: true,
+                message: "Product updated successfully",
+                data: response.data
             });
+
+        } catch (error) {
+            next(error);
         }
-
-        const product = await updateProduct(req.params.product_id as string, req.body);
-
-        return res.status(200).json({
-            success: true,
-            message: "Product updated successfully",
-            data: productResponseMapper(product)
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
+}};
 
 
 // DELETE
-export const deleteProductController = async ( req: Request, res: Response, next: NextFunction ) => {
+export class DeleteProductController extends AbstractController implements IController { 
+    async execute ( req: Request, res: Response, next: NextFunction ) {
 
-    try {
+        try {
 
-        const result = await deleteProduct(req.params.product_id as string);
+            const result = await productService.delete(req.params.product_id as string);
 
-        return res.status(200).json({
-            success: true,
-            message: "Product deleted successfully",
-            data: result
-        });
+            const response = this.success(result);
 
-    } catch (error) {
-        next(error);
-    }
-};
+            return res.status(response.statusCode).json({
+                success: true,
+                message: "Product deleted successfully",
+                data: response.data
+            });
+
+        } catch (error) {
+            next(error);
+        }
+}};
+
+export const createProductController = new CreateProductController();
+
+export const getProductsController = new GetProductsController();
+
+export const getProductByIdController = new GetProductByIdController();
+
+export const updateProductController = new UpdateProductController();
+
+export const deleteProductController = new DeleteProductController();
