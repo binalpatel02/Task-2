@@ -1,3 +1,2 @@
-export * from "./middleware/error/index.js"
-export * from "./middleware/passport/index.js"
-export * from "./middleware/rate-limit/index.js"
+export * from "./middleware/index.js"
+export * from "./abstract/index.js"
