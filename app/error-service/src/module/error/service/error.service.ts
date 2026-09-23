@@ -1,14 +1,12 @@
-import ErrorModel from "../model/error.model.js";
-
 import { createErrorMapper } from "../mapper/error.mapper.js";
-
 import { IError } from "@library/schema/error";
+import { errorModel } from "../model/error.model.js";
 
 export const createError = async ( data: IError ) => {
 
     const errorData = createErrorMapper(data);
 
-    const error = await ErrorModel.create( errorData );
+    const error = await errorModel.add( errorData );
 
     return error;      
 };
@@ -16,11 +14,12 @@ export const createError = async ( data: IError ) => {
 
 export const getErrors = async () => {
 
-    const errors = await ErrorModel
-        .find()
-        .sort({
+    const errors = await errorModel.getAll(
+        {},
+        {
             created_at: -1
-        });
+        }
+    );
 
     return errors;  
 };
@@ -28,7 +27,7 @@ export const getErrors = async () => {
 
 export const getErrorById = async ( errorId: string ) => {
 
-    const error = await ErrorModel.findById(errorId);
+    const error = await errorModel.get({error_id: errorId});
 
     if (!error) {
         throw new Error("Error not found");
@@ -41,12 +40,7 @@ export const getErrorById = async ( errorId: string ) => {
 // UPDATE
 export const updateErrorById = async (errorId: string, data: any) => {
     
-    const error = await ErrorModel.findByIdAndUpdate(errorId, data ,
-        {
-            returnDocument: 'after',
-            runValidators: true
-        }
-    );
+    const error = await errorModel.update({error_id: errorId}, data);
 
     if(!error) {
         throw new Error("Error not found");
@@ -59,7 +53,7 @@ export const updateErrorById = async (errorId: string, data: any) => {
 // DELETE 
 export const deleteErrorById = async ( errorId: string ) => {
 
-    const error = await ErrorModel.findByIdAndDelete( errorId );
+    const error = await errorModel.delete( {error_id: errorId} );
 
     if (!error) {
         throw new Error("Error not found");

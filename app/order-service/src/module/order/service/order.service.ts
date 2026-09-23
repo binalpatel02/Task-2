@@ -1,44 +1,65 @@
-import Order from "../model/order.model.js";
-import OrderItem from "../../orderItem/model/orderItem.model.js"; 
+import { orderModel } from "../model/order.model.js";
+import { orderItemModel } from "../../orderItem/index.js";
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://127.0.0.1:3000";
 
-const checkUserExists = async (userId: string, token?: string) => {
+
+const checkUserExists = async (
+    userId: string,
+    token?: string
+) => {
     try {
-        const response = await fetch(`${USER_SERVICE_URL}/api/v1/users/${userId}`, { 
-            headers: {
-                "Authorization": token ? token : ""
+        const response = await fetch(
+            `${USER_SERVICE_URL}/api/v1/users/${userId}`,
+            {
+                headers: {
+                    Authorization: token ? token : ""
+                }
             }
-        });
+        );
 
         if (!response.ok) {
-            throw new Error(`User not found (Status: ${response.status})`);
+            throw new Error(
+                `User not found (Status: ${response.status})`
+            );
         }
 
         const result = await response.json();
+
         return result.data;
     }
-    
+
     catch (error: any) {
-        if (error.cause?.code === "ECONNREFUSED" || error.name === "TypeError") {
-            throw new Error(`Unable to connect to User Service at ${USER_SERVICE_URL}`);
+
+        if (
+            error.cause?.code === "ECONNREFUSED" ||
+            error.name === "TypeError"
+        ) {
+            throw new Error(
+                `Unable to connect to User Service at ${USER_SERVICE_URL}`
+            );
         }
+
         throw error;
     }
 };
 
-// helper function for total_amount
-export const updateOrderTotal = async (orderId: string) => {
 
-    const result = await OrderItem.aggregate([
+const calculateOrderTotal = async (
+    orderId: string
+): Promise<number> => {
+
+    const result = await orderItemModel.aggregate([
         {
             $match: {
-                order_id: orderId
+                _id: orderId
             }
         },
+
         {
             $group: {
                 _id: "$order_id",
+
                 total_amount: {
                     $sum: "$subtotal"
                 }
@@ -46,21 +67,43 @@ export const updateOrderTotal = async (orderId: string) => {
         }
     ]);
 
-    const totalAmount = result.length > 0 ? Math.max(0, result[0].total_amount) : 0;
+    if (
+        !result ||
+        result.length === 0
+    ) {
+        return 0;
+    }
 
-    const order = await Order.findByIdAndUpdate(
-        orderId,
+    return Math.max(
+        0,
+        Number(result[0].total_amount) || 0
+    );
+};
+
+
+export const updateOrderTotal = async (
+    orderId: string
+) => {
+
+    const totalAmount =
+        await calculateOrderTotal(orderId);
+
+    const order = await orderModel.update(
         {
-            total_amount: totalAmount
+            _id: orderId
         },
         {
-            returnDocument: "after"
+            total_amount: totalAmount
         }
     );
 
     if (!order) {
-        const error = new Error("Order not found") as any;
+
+        const error =
+            new Error("Order not found") as any;
+
         error.statusCode = 404;
+
         throw error;
     }
 
@@ -68,118 +111,221 @@ export const updateOrderTotal = async (orderId: string) => {
 };
 
 
-// CREATE
-export const createOrder = async (data: any, token?: string) => {
+export const createOrder = async (
+    data: any,
+    token?: string
+) => {
+
     try {
-        const user = await checkUserExists(data.user_id, token);
+
+        const user = await checkUserExists(
+            data.user_id,
+            token
+        );
 
         if (!user) {
-            const customError = new Error("The provided user_id is invalid or does not exist.") as any;
-            customError.statusCode = 404; 
+
+            const customError =
+                new Error(
+                    "The provided user_id is invalid or does not exist."
+                ) as any;
+
+            customError.statusCode = 404;
+
             throw customError;
         }
 
-        const order = await Order.create({
+        const order = await orderModel.add({
+
             user_id: data.user_id,
-            total_amount: 0, 
-            order_status: data.order_status || "PENDING"
+
+            total_amount: 0,
+
+            order_status:
+                data.order_status || "PENDING"
         });
 
-        return order;
 
-    } catch (error: any) {
-        if (error.message && error.message.includes("User not found")) {
-            const customError = new Error("The provided user_id is invalid or does not exist.") as any;
-            customError.statusCode = 404; 
+        return order;
+    }
+
+    catch (error: any) {
+
+        if (
+            error.message &&
+            error.message.includes("User not found")
+        ) {
+
+            const customError =
+                new Error(
+                    "The provided user_id is invalid or does not exist."
+                ) as any;
+
+            customError.statusCode = 404;
+
             throw customError;
         }
-        
+
         throw error;
     }
 };
 
 
-// GET ALL
 export const getOrders = async () => {
-    const orders = await Order.find().sort({ created_at: -1 });
 
-    // Dynamically sync totals for all listed orders before responding
-    const syncedOrders = await Promise.all(orders.map(async (order) => {
-        const items = await OrderItem.find({ order_id: order._id });
-        const total = items.reduce((sum, item) => sum + item.subtotal, 0);
-        
-        order.total_amount = total;
-        await order.save();
-        return order;
-    }));
-
-    return syncedOrders;
-};
-
-
-// GET BY ID
-export const getOrderById = async ( orderId: string ) => {
-    // Fetch all items matching this order ID
-    const items = await OrderItem.find({ order_id: orderId });
-
-    // Calculate the total amount sum
-    const calculatedTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
-
-    // Update the total_amount in the database right before returning it
-    const order = await Order.findByIdAndUpdate(
-        orderId,
-        { total_amount: calculatedTotal },
-        { returnDocument: "after" }
-    );
-
-    if (!order) {
-        const error = new Error("Order not found") as any;
-        error.statusCode = 404;
-        throw error;
-    }
-
-    return order;
-};
-
-
-// UPDATE
-export const updateOrder = async ( orderId: string, data: any ) => {
-
-    const order = await Order.findByIdAndUpdate( orderId, data,
+    const orders = await orderModel.getAll(
+        {},
         {
-            returnDocument: "after",
-            runValidators: true
+            created_at: -1
         }
     );
 
+
+    const totals = await orderItemModel.aggregate([
+
+        {
+            $group: {
+                _id: "$order_id",
+
+                total_amount: {
+                    $sum: "$subtotal"
+                }
+            }
+        }
+
+    ]);
+
+
+    const totalMap = new Map<
+        string,
+        number
+    >();
+
+    for (const item of totals) {
+
+        totalMap.set(
+            String(item._id),
+
+            Math.max(
+                0,
+                Number(item.total_amount) || 0
+            )
+        );
+    }
+
+    return orders.map((order: any) => {
+
+        const calculatedTotal =
+            totalMap.get(
+                String(order.order_id)
+            ) ?? 0;
+
+        return {
+            ...order.toObject
+                ? order.toObject()
+                : order,
+
+            total_amount: calculatedTotal
+        };
+    });
+};
+
+
+export const getOrderById = async (
+    orderId: string
+) => {
+
+
+    const order = await orderModel.get({
+        _id: orderId
+    });
+
+
     if (!order) {
-        const error = new Error("Order not found") as any;
+
+        const error =
+            new Error("Order not found") as any;
+
         error.statusCode = 404;
+
         throw error;
     }
 
-    // Recalculate total after update to ensure integrity
-    const items = await OrderItem.find({ order_id: orderId });
-    const calculatedTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
-    order.total_amount = calculatedTotal;
-    await order.save();
+
+    const calculatedTotal =
+        await calculateOrderTotal(orderId);
+
+    return {
+        ...order.toObject
+            ? order.toObject()
+            : order,
+
+        total_amount: calculatedTotal
+    };
+};
+
+
+export const updateOrder = async (
+    orderId: string,
+    data: any
+) => {
+
+    const calculatedTotal =
+        await calculateOrderTotal(orderId);
+
+    const updateData = {
+        ...data,
+
+        total_amount: calculatedTotal
+    };
+
+    const order = await orderModel.update(
+        {
+            _id: orderId
+        },
+
+        updateData
+    );
+
+
+    if (!order) {
+
+        const error =
+            new Error("Order not found") as any;
+
+        error.statusCode = 404;
+
+        throw error;
+    }
+
 
     return order;
 };
 
- 
-// DELETE
-export const deleteOrder = async ( orderId: string ) => {
 
-    const order = await Order.findByIdAndDelete( orderId );
+export const deleteOrder = async (
+    orderId: string
+) => {
+
+    const order = await orderModel.delete({
+        _id: orderId
+    });
+
 
     if (!order) {
-        const error = new Error("Order not found") as any;
+
+        const error =
+            new Error("Order not found") as any;
+
         error.statusCode = 404;
+
         throw error;
     }
 
-    await OrderItem.deleteMany({ order_id: orderId });
+    await orderItemModel.deleteMany({
+        _id: orderId
+    });
+
 
     return order;
 };

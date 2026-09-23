@@ -1,5 +1,5 @@
-import OrderItem from "../model/orderItem.model.js";
-import Order from "../../order/model/order.model.js";
+import { orderModel } from "../../order/model/order.model.js";
+import { orderItemModel } from "../model/orderItem.model.js";
 import { updateOrderTotal } from "../../order/service/order.service.js";
 
 const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || "http://127.0.0.1:3001";
@@ -32,7 +32,7 @@ const checkProductExists = async (productId: string, token?: string) => {
 // CREATE
 export const createOrderItem = async (data: any, token?: string) => {
     // Check Order
-    const order = await Order.findById(data.order_id);
+    const order = await orderModel.get({_id: data.order_id});
 
     if (!order) {
         const error = new Error("Order not found") as any;
@@ -58,7 +58,7 @@ export const createOrderItem = async (data: any, token?: string) => {
     const subtotal = requestedQuantity * Number(product.price);
 
     // Create OrderItem
-    const orderItem = await OrderItem.create({
+    const orderItem = await orderItemModel.add({
         order_id: data.order_id,
         product_id: data.product_id,
         quantity: requestedQuantity,
@@ -84,7 +84,7 @@ export const createOrderItem = async (data: any, token?: string) => {
     if (!response.ok) {
 
         // If stock update failed, remove the Order Item that we just created
-        await OrderItem.findByIdAndDelete( orderItem._id );
+        await orderItemModel.delete({_id: orderItem._id });
 
         const error = new Error( `Failed to update product stock (Status: ${response.status})` ) as any;
 
@@ -100,12 +100,14 @@ export const createOrderItem = async (data: any, token?: string) => {
 
 // GET ALL
 export const getOrderItems = async () => {
-    return await OrderItem.find() .sort({ created_at: -1 });
+    return await orderItemModel.getAll(
+        {},
+        { created_at: -1 });
 };
 
 // GET BY ID
 export const getOrderItemById = async (orderItemId: string) => {
-    const orderItem = await OrderItem.findById(orderItemId);
+    const orderItem = await orderItemModel.get({_id: orderItemId});
 
     if (!orderItem) {
         const error = new Error("Order item not found") as any;
@@ -118,7 +120,7 @@ export const getOrderItemById = async (orderItemId: string) => {
 
 // UPDATE
 export const updateOrderItem = async (orderItemId: string, data: any) => {
-    const existingItem = await OrderItem.findById(orderItemId);
+    const existingItem = await orderItemModel.get({_id: orderItemId});
 
     if (!existingItem) {
         const error = new Error("Order item not found") as any;
@@ -147,7 +149,7 @@ export const updateOrderItem = async (orderItemId: string, data: any) => {
     // If order_id is changed, check new order exists
     if (newOrderId !== oldOrderId) {
 
-        const newOrder = await Order.findById(newOrderId);
+        const newOrder = await orderModel.get({_id: newOrderId});
 
         if (!newOrder) {
             const error = new Error("New order not found") as any;
@@ -156,8 +158,8 @@ export const updateOrderItem = async (orderItemId: string, data: any) => {
         }
     }
 
-    const orderItem = await OrderItem.findByIdAndUpdate(
-            orderItemId,
+    const orderItem = await orderItemModel.update(
+            {_id: orderItemId},
             {
                 ...data,
                 order_id: newOrderId,
@@ -165,10 +167,6 @@ export const updateOrderItem = async (orderItemId: string, data: any) => {
                 unit_price: unitPrice,
                 subtotal
             },
-            {
-                returnDocument: "after",
-                runValidators: true
-            }
         );
 
     // Recalculate old order
@@ -185,7 +183,7 @@ export const updateOrderItem = async (orderItemId: string, data: any) => {
 
 // DELETE
 export const deleteOrderItem = async (orderItemId: string) => {
-    const orderItem = await OrderItem.findById(orderItemId);
+    const orderItem = await orderItemModel.get({_id: orderItemId});
 
     if (!orderItem) {
         const error = new Error( "Order item not found") as any;
@@ -195,9 +193,7 @@ export const deleteOrderItem = async (orderItemId: string) => {
 
     const orderId = orderItem.order_id;
 
-    await OrderItem.findByIdAndDelete(
-        orderItemId
-    );
+    await orderItemModel.delete({_id: orderItemId});
 
     // Recalculate after deletion
     await updateOrderTotal(orderId);

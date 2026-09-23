@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User } from "@library/schema/user";
 import { publishKafkaMessage } from "@library/third-party/kafka";
 import { USER_TOPICS } from "../../../library/kafka/topic.js";
+import { userModel } from "../model/user.model.js";
 
 interface ILoginRequest {
     email: string;
@@ -11,8 +11,7 @@ interface ILoginRequest {
 
 export const loginUser = async ({ email, password }: ILoginRequest) => {
 
-    const user = await User.findOne({ email });
-
+    const user = await userModel.get({ email });
     if (!user) {
         throw new Error("Invalid email");
     }
@@ -55,7 +54,7 @@ export const loginUser = async ({ email, password }: ILoginRequest) => {
 };
 
 export const createUser = async (data: any) => {
-    const existingUser = await User.findOne({
+    const existingUser = await userModel.get({
         email: data.email
     });
 
@@ -68,7 +67,7 @@ export const createUser = async (data: any) => {
         10
     );
 
-    const user = await User.create({
+    const user = await userModel.add({
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
@@ -93,12 +92,12 @@ export const createUser = async (data: any) => {
 };
 
 export const getUsers = async () => {
-    const users = await User.find().select("-password_hash");
+    const users = await userModel.getAll();
     return users;
 };
 
 export const getUserById = async (id: string) => {
-    const user = await User.findById(id).select("-password_hash");
+    const user = await userModel.get({_id: id})
     if (!user) {
         throw new Error("User not found");
     }
@@ -108,7 +107,7 @@ export const getUserById = async (id: string) => {
 export const updateUser = async (id: string, data: any) => {
     // Check duplicate email
     if (data.email) {
-     const emailTaken = await User.findOne({ email: data.email, _id: { $ne: id } });
+     const emailTaken = await userModel.get({ email: data.email, _id: { $ne: id } });
         if (emailTaken) {
             throw new Error("Email is already in use by another account");
         }
@@ -120,10 +119,7 @@ export const updateUser = async (id: string, data: any) => {
         delete updateData.password;
     }
 
-    const updatedUser = await User.findByIdAndUpdate(id, updateData, {
-            returnDocument: "after",
-            runValidators: true
-        }).select("-password_hash");
+    const updatedUser = await userModel.update({_id: id}, updateData);
 
     if (!updatedUser) {
         throw new Error("User not found to update");
@@ -146,12 +142,12 @@ export const updateUser = async (id: string, data: any) => {
 };
 
 export const deleteUser = async (id: string) => {
-    const user = await User.findById(id);
+    const user = await userModel.get({_id: id});
     if (!user) {
         throw new Error("User not found to delete");
     }
 
-    await User.findByIdAndDelete(id);
+    await userModel.delete({_id: id});
 
     // Publish Kafka event
     await publishKafkaMessage(

@@ -1,6 +1,6 @@
-import Product from "../model/product.model.js";
 import { publishKafkaMessage } from "@library/third-party/kafka";
 import { PRODUCT_TOPICS } from "../../../library/kafka/topic.js";
+import { productModel } from "../model/product.model.js";
 
 // CREATE
 export const createProduct = async (data: any) => {
@@ -8,9 +8,9 @@ export const createProduct = async (data: any) => {
     const productPrice = Number(data.price);
     const incomingQuantity = data.quantity && data.quantity >= 0 ? Number(data.quantity) : 0;
 
-    const existingProduct = await Product.findOne({ 
-        name: productName, 
-        price: productPrice 
+    const existingProduct = await productModel.get({
+        name: productName,
+        price: productPrice
     });
 
     if (existingProduct) {
@@ -23,7 +23,7 @@ export const createProduct = async (data: any) => {
     }
 
     // Same laptop model but DIFFERENT price, OR entirely new laptop name -> Create new record!
-    const product = await Product.create({
+    const product = await productModel.add({
         name: productName,
         price: productPrice,
         quantity: incomingQuantity
@@ -48,15 +48,19 @@ export const createProduct = async (data: any) => {
 // GET ALL
 export const getProducts = async () => {
 
-    return await Product.find()
-        .sort({ created_at: -1 });
+    return await productModel.getAll(
+        {},
+        {
+            created_at: -1
+        }
+    );
 };
 
 
 // GET BY ID
 export const getProductById = async ( productId: string ) => {
 
-    const product = await Product.findById(productId);
+    const product = await productModel.get({_id: productId});
 
     if (!product) {
         throw new Error("Product not found");
@@ -68,7 +72,7 @@ export const getProductById = async ( productId: string ) => {
 
 // UPDATE
 export const updateProduct = async ( productId: string, data: any ) => {
-    const product = await Product.findById(productId);
+    const product = await productModel.get({_id: productId});
 
     if (!product) {
        throw new Error("Product not found");
@@ -94,7 +98,7 @@ export const updateProduct = async ( productId: string, data: any ) => {
     if (data.name !== undefined) product.name = data.name;
     if (data.price !== undefined) product.price = data.price;
 
-    await product.save();
+    await productModel.update({_id: productId}, data);
 
     await publishKafkaMessage(
         PRODUCT_TOPICS.UPDATED,
@@ -113,7 +117,7 @@ export const updateProduct = async ( productId: string, data: any ) => {
  
 // DELETE
 export const deleteProduct = async ( productId: string ) => {
-    const product = await Product.findById(productId);
+    const product = await productModel.get({_id: productId});
 
     if (!product) {
         throw new Error("Product not found");
@@ -121,7 +125,7 @@ export const deleteProduct = async ( productId: string ) => {
 
     console.log(`Removing product document [${product.name}]. Clearing out its remaining ${product.quantity} items from tracking indexes.`);
     
-    await Product.findByIdAndDelete(productId);
+    await productModel.delete({_id: productId});
     
     await publishKafkaMessage(
         PRODUCT_TOPICS.DELETED,
