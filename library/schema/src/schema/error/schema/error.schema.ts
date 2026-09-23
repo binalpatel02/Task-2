@@ -53,7 +53,7 @@ const errorSchema = new Schema<IError>(
     }
 ); 
 
-export const ErrorModel = mongoose.model<IError>(
+export const Error = mongoose.model<IError>(
     "Error",
     errorSchema
 );
