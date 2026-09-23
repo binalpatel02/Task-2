@@ -1,7 +1,7 @@
 export abstract class AbstractController {
-    protected success<T> (
+    protected success<T>(
         data: T,
-        statusCode: 200
+        statusCode = 200
     ) {
         return {
             statusCode,
