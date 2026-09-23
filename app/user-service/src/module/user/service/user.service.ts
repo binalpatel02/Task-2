@@ -11,14 +11,18 @@ interface ILoginRequest {
 
 export const loginUser = async ({ email, password }: ILoginRequest) => {
 
-    const user = await userModel.get({ email });
-    if (!user) {
+    const user = await userModel.getUserForLogin(email);
+    if (!user) {   
         throw new Error("Invalid email");
+    }
+
+    if (!user.password_hash) {
+        throw new Error("Password hash not found for this user");
     }
 
     const isPasswordValid = await bcrypt.compare(
         password,
-        user.password_hash as unknown as string
+        user.password_hash
     );
 
     if (!isPasswordValid) {
