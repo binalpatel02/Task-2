@@ -14,6 +14,10 @@ export class UserModel extends BaseModel<any> {
             }
         );
     }
+
+    async getUserForLogin(email: string) {
+        return await User.findOne({email}).select("+password_hash")
+    }
 }
 
 export const userModel = new UserModel(); 
