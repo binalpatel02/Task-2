@@ -20,7 +20,8 @@ export abstract class AbstractService<T>
 
     async getAll( query?: IServiceQuery ): Promise<T[]> {
         return this.model.getAll(
-            query?.filter ?? {}
+            query?.filter ?? {},
+            query?.sort
         );
     }
 
