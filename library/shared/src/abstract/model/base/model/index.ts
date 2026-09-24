@@ -54,9 +54,9 @@ export class BaseModel<T extends Document> {
     }
 
     async update( filter: QueryFilter<T>, data: UpdateQuery<T>) {
-        return this.model.findOneAndUpdate( filter, data,
-            {            
-                new: this.options.return_doc ?? true,            
+        return this.model.findOneAndUpdate( filter, data,       
+            {           
+                returnDocument: "after",            
                 runValidators: true        
             }    
         ).exec();
