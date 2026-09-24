@@ -96,7 +96,13 @@ export class UpdateOrderController extends AbstractController implements IContro
                 });
             }
 
-            const order = await orderService.updateOrder( req.params.order_id as string, req.body );
+            const token = req.headers.authorization;
+
+            const order = await orderService.updateOrder(
+                req.params.order_id as string,
+                req.body,
+                token
+            );
 
             const response = this.success(order);
 
@@ -119,12 +125,17 @@ export class DeleteOrderController extends AbstractController implements IContro
 
         try {
 
-            const order = await orderService.deleteOrder(req.params.order_id as string);
+            const token = req.headers.authorization;
+
+            const order = await orderService.deleteOrder(
+                req.params.order_id as string,
+                token
+            );
 
             const response = this.success(order);
 
             return res.status(response.statusCode).json({
-            success: true,
+                success: true,
                 message: "Order deleted successfully",
                 data: response.data
             });

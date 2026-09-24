@@ -98,7 +98,15 @@ export class UpdateOrderItemController extends AbstractController implements ICo
                 });
             }
 
-            const orderItem = await orderItemService.updateOrderItem( req.params.order_item_id as string, req.body );
+            // Grab the token from the incoming client request headers
+            const token = req.headers.authorization;
+
+            // Pass req.body and token to service layer
+            const orderItem = await orderItemService.updateOrderItem(
+                req.params.order_item_id as string,
+                req.body,
+                token
+            );
 
             const response = this.success(orderItem);
 
@@ -121,7 +129,14 @@ export class DeleteOrderItemController extends AbstractController implements ICo
 
         try {
 
-            const orderItem = await orderItemService.deleteOrderItem(req.params.order_item_id as string );
+            // Grab the token from the incoming client request headers
+            const token = req.headers.authorization;
+
+            // Pass order item id and token to service layer
+            const orderItem = await orderItemService.deleteOrderItem(
+                req.params.order_item_id as string,
+                token
+            );
 
             const response = this.success(orderItem);
 
