@@ -1,116 +1,142 @@
 import type { Request, Response, NextFunction } from "express";
-import { createOrder, getOrders, getOrderById, updateOrder, deleteOrder } from "../service/order.service.js";
+import { orderService } from "../service/order.service.js";
 import { createOrderValidator, updateOrderValidator } from "../validator/order.validator.js";
+import { AbstractController, IController } from "@library/shared";
 
 // CREATE
-export const createOrderController = async ( req: Request, res: Response, next: NextFunction ) => {
+export class CreateOrderController extends AbstractController implements IController{
+    async execute( req: Request, res: Response, next: NextFunction ) {
 
-    try {
+        try {
 
-        const { error } = createOrderValidator.validate(req.body);
+            const { error } = createOrderValidator.validate(req.body);
 
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                message: error.details[0].message
-            });
-        }
+            if (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: error.details[0].message
+                });
+            }
 
-        const token = req.headers.authorization;
+            const token = req.headers.authorization;
         
-        const order = await createOrder(req.body, token);
+            const order = await orderService.createOrder(req.body, token);
 
-        return res.status(201).json({
-            success: true,
-            message: "Order created successfully",
-            data: order
-        });
+            const response = this.created(order);
 
-    } catch (error) {
-        next(error);
+            return res.status(response.statusCode).json({
+                success: true,
+                message: "Order created successfully",
+                data: response.data
+            });
+
+        } catch (error) {
+            next(error);
+        }
     }
 };
 
 
 // GET ALL
-export const getOrdersController = async ( _req: Request, res: Response, next: NextFunction ) => {
+export class GetOrdersController extends AbstractController implements IController{
+    async execute( _req: Request, res: Response, next: NextFunction ) {
 
-    try {
+        try {
 
-        const orders = await getOrders();
+            const orders = await orderService.getOrders();
 
-        return res.status(200).json({
-            success: true,
-            data: orders
-        });
+            const response = this.success(orders);
 
-    } catch (error) {
-        next(error);
-    }
-};
+            return res.status(response.statusCode).json({
+                success: true,
+                data: response.data
+            });
+
+        } catch (error) {
+            next(error);
+        }
+    };
+}
  
 
 // GET BY ID
-export const getOrderByIdController = async ( req: Request, res: Response, next: NextFunction ) => {
+export class GetOrderByIdController extends AbstractController implements IController{
+    async execute( req: Request, res: Response, next: NextFunction ) {
 
-    try {
+        try {
 
-        const order = await getOrderById(req.params.order_id as string);
+            const order = await orderService.getOrderById(req.params.order_id as string);
 
-        return res.status(200).json({
-            success: true,
-            data: order
-        });
+            const response = this.success(order);
 
-    } catch (error) {
-        next(error);
-    }
-};
+            return res.status(response.statusCode).json({
+                success: true,
+                data: response.data
+            });
+
+        } catch (error) {
+            next(error);
+        }
+    };
+}
 
 
 // UPDATE
-export const updateOrderController = async ( req: Request, res: Response, next: NextFunction ) => {
+export class UpdateOrderController extends AbstractController implements IController{ 
+    async execute( req: Request, res: Response, next: NextFunction ) {
 
-    try {
+        try {
 
-        const { error } = updateOrderValidator.validate(req.body);
+            const { error } = updateOrderValidator.validate(req.body);
 
-        if (error) {
-            return res.status(400).json({
-                success: false,
-                message: error.details[0].message
+            if (error) {
+                return res.status(400).json({
+                    success: false,
+                    message: error.details[0].message
+                });
+            }
+
+            const order = await orderService.updateOrder( req.params.order_id as string, req.body );
+
+            const response = this.success(order);
+
+            return res.status(response.statusCode).json({
+                success: true,
+                message: "Order updated successfully",
+                data: response.data
             });
+
+        } catch (error) {
+            next(error);
         }
-
-        const order = await updateOrder( req.params.order_id as string, req.body );
-
-        return res.status(200).json({
-            success: true,
-            message: "Order updated successfully",
-            data: order
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
+    };
+}
 
 
 // DELETE
-export const deleteOrderController = async ( req: Request, res: Response, next: NextFunction
-) => {
+export class DeleteOrderController extends AbstractController implements IController{
+    async execute( req: Request, res: Response, next: NextFunction ) {
 
-    try {
+        try {
 
-        const order = await deleteOrder(req.params.order_id as string);
+            const order = await orderService.deleteOrder(req.params.order_id as string);
 
-        return res.status(200).json({
+            const response = this.success(order);
+
+            return res.status(response.statusCode).json({
             success: true,
-            message: "Order deleted successfully",
-            data: order
-        });
+                message: "Order deleted successfully",
+                data: response.data
+            });
 
-    } catch (error) {
-        next(error);
-    }
-};
+        } catch (error) {
+            next(error);
+        }
+    };
+}
+
+export const createOrderController = new CreateOrderController();
+export const getOrdersController = new GetOrdersController();
+export const getOrderByIdController = new GetOrderByIdController();
+export const updateOrderController = new UpdateOrderController();
+export const deleteOrderController = new DeleteOrderController();
