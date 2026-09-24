@@ -1,63 +1,86 @@
-import { createErrorMapper } from "../mapper/error.mapper.js";
+import { AbstractService } from "@library/shared";
 import { IError } from "@library/schema/error";
+import { createErrorMapper } from "../mapper/error.mapper.js";
 import { errorModel } from "../model/error.model.js";
 
-export const createError = async ( data: IError ) => {
+export class ErrorService extends AbstractService<any> {
 
-    const errorData = createErrorMapper(data);
-
-    const error = await errorModel.add( errorData );
-
-    return error;      
-};
+    constructor() {
+        super(errorModel, "_id");
+    }
 
 
-export const getErrors = async () => {
+    // CREATE
+    async createError(data: IError) {
 
-    const errors = await errorModel.getAll(
-        {},
-        {
-            created_at: -1
+        const errorData = createErrorMapper(data);
+
+        const error = await super.create(errorData);
+
+        return error;
+    }
+
+
+    // GET ALL
+    async getErrors() {
+
+        const errors = await errorModel.getAll(
+            {},
+            {
+                created_at: -1
+            }
+        );
+
+        return errors;
+    }
+
+
+    // GET BY ID
+    async getErrorById(errorId: string) {
+
+        const error = await errorModel.get({
+            error_id: errorId
+        });
+
+        if (!error) {
+            throw new Error("Error not found");
         }
-    );
 
-    return errors;  
-};
-
-
-export const getErrorById = async ( errorId: string ) => {
-
-    const error = await errorModel.get({error_id: errorId});
-
-    if (!error) {
-        throw new Error("Error not found");
+        return error;
     }
 
-    return error;
-};
 
+    // UPDATE
+    async updateErrorById( errorId: string, data: any) {
 
-// UPDATE
-export const updateErrorById = async (errorId: string, data: any) => {
-    
-    const error = await errorModel.update({error_id: errorId}, data);
+        const error = await errorModel.update(
+            {
+                error_id: errorId
+            },
+            data
+        );
 
-    if(!error) {
-        throw new Error("Error not found");
+        if (!error) {
+            throw new Error("Error not found");
+        }
+
+        return error;
     }
 
-    return error;
+
+    // DELETE
+    async deleteErrorById(errorId: string) {
+
+        const error = await errorModel.delete({
+            error_id: errorId
+        });
+
+        if (!error) {
+            throw new Error("Error not found");
+        }
+
+        return error;
+    }
 }
 
-
-// DELETE 
-export const deleteErrorById = async ( errorId: string ) => {
-
-    const error = await errorModel.delete( {error_id: errorId} );
-
-    if (!error) {
-        throw new Error("Error not found");
-    }
-
-    return error;
-};
+export const errorService = new ErrorService();
