@@ -1,21 +1,21 @@
 import { Router } from "express";
 
-import { createErrorController, getErrorsController, getErrorByIdController, updateErrorByIdController, deleteErrorController } from "../controller/error.controller.js";
+import { createErrorController, getErrorsController, getErrorByIdController, updateErrorController, deleteErrorController } from "../controller/error.controller.js";
 
-import { authenticate } from "@library/shared";
+import { authenticate, controllerHandler } from "@library/shared";
 
 const router = Router();
 
 router.use(authenticate);
 
-router.post( "/", createErrorController );
+router.post( "/", controllerHandler(createErrorController));
 
-router.get( "/", getErrorsController );
+router.get( "/", controllerHandler(getErrorsController));
 
-router.get( "/:error_id", getErrorByIdController );
+router.get( "/:error_id", controllerHandler(getErrorByIdController));
 
-router.put( "/:error_id", updateErrorByIdController);
+router.put( "/:error_id", controllerHandler(updateErrorController));
 
-router.delete( "/:error_id", deleteErrorController);
+router.delete( "/:error_id", controllerHandler(deleteErrorController));
 
 export default router;

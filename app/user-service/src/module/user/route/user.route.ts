@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createUserController, getUserByIdController, getUsersController, updateUserController, deleteUserController, loginUserController } from "../controller/user.controller.js";
-import { rateLimit } from "@library/shared";
+import { rateLimit, controllerHandler } from "@library/shared";
 
 const router = Router();
 
@@ -16,13 +16,13 @@ const userRateLimit = rateLimit({
     keyPrefix: "user-api"
 })
 
-router.post( "/login", loginRateLimit, loginUserController );
+router.post( "/login", loginRateLimit, controllerHandler(loginUserController));
 
 router.use(userRateLimit);
-router.post("/", createUserController);
-router.get("/", getUsersController);
-router.get("/:id", getUserByIdController);
-router.put("/:id", updateUserController);
-router.delete("/:id", deleteUserController);
+router.post("/", controllerHandler(createUserController));
+router.get("/", controllerHandler(getUsersController));
+router.get("/:id", controllerHandler(getUserByIdController));
+router.put("/:id", controllerHandler(updateUserController));
+router.delete("/:id", controllerHandler(deleteUserController));
 
 export default router;

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createProductController, getProductsController, getProductByIdController, updateProductController, deleteProductController } from "../controller/product.controller.js";
-import {rateLimit, authenticate } from "@library/shared";
+import {rateLimit, authenticate, controllerHandler } from "@library/shared";
 
 const router = Router();
 
@@ -12,14 +12,14 @@ const productRateLimit = rateLimit({
 
 router.use(authenticate, productRateLimit);
 
-router.post("/", createProductController);
+router.post("/", controllerHandler(createProductController));
 
-router.get("/", getProductsController);
+router.get("/", controllerHandler(getProductsController));
 
-router.get("/:product_id", getProductByIdController);
+router.get("/:product_id",controllerHandler(getProductByIdController));
 
-router.put("/:product_id", updateProductController);
+router.put("/:product_id", controllerHandler(updateProductController));
 
-router.delete("/:product_id", deleteProductController);
+router.delete("/:product_id", controllerHandler(deleteProductController));
 
 export default router;
