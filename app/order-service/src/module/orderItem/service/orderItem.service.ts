@@ -1,6 +1,7 @@
 import { orderModel } from "../../order/model/order.model.js";
 import { orderItemModel } from "../model/orderItem.model.js";
 import { updateOrderTotal } from "../../order/service/order.service.js";
+import { AbstractService } from "@library/shared";
 
 const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || "http://127.0.0.1:3001";
 
@@ -29,174 +30,176 @@ const checkProductExists = async (productId: string, token?: string) => {
     }
 };
 
-// CREATE
-export const createOrderItem = async (data: any, token?: string) => {
-    // Check Order
-    const order = await orderModel.get({_id: data.order_id});
 
-    if (!order) {
-        const error = new Error("Order not found") as any;
-        error.statusCode = 404;
-        throw error;
+export class OrderItemService extends AbstractService <any> {
+
+    constructor() {
+        super(orderItemModel, "_id");
     }
 
-    // Check Product
-    const product = await checkProductExists( data.product_id,  token );
+    
+    // CREATE
+    async createOrderItem(data: any, token?: string) {
+        // Check Order
+        const order = await orderModel.get({_id: data.order_id});
 
-    const requestedQuantity = Number(data.quantity);
-    const availableQuantity = Number(product.quantity);
-
-    if (requestedQuantity > availableQuantity) {
-
-        const error = new Error( `Insufficient stock. Requested: ${requestedQuantity}, Available: ${availableQuantity}` ) as any;
-
-        error.statusCode = 400;
-
-        throw error;
-    }
-
-    const subtotal = requestedQuantity * Number(product.price);
-
-    // Create OrderItem
-    const orderItem = await orderItemModel.add({
-        order_id: data.order_id,
-        product_id: data.product_id,
-        quantity: requestedQuantity,
-        unit_price: Number(product.price),
-        subtotal
-    });
-
-    const newQuantity = availableQuantity - requestedQuantity;
-
-    const response = await fetch( `${PRODUCT_SERVICE_URL}/api/v1/products/${data.product_id}`,
-        {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": token ? token : ""
-            },
-            body: JSON.stringify({
-                quantity: newQuantity
-            })
-        }
-    );
-
-    if (!response.ok) {
-
-        // If stock update failed, remove the Order Item that we just created
-        await orderItemModel.delete({_id: orderItem._id });
-
-        const error = new Error( `Failed to update product stock (Status: ${response.status})` ) as any;
-
-        error.statusCode = 500;
-
-        throw error;
-    }
-
-    await updateOrderTotal(data.order_id);
-
-    return orderItem;
-};
-
-// GET ALL
-export const getOrderItems = async () => {
-    return await orderItemModel.getAll(
-        {},
-        { created_at: -1 });
-};
-
-// GET BY ID
-export const getOrderItemById = async (orderItemId: string) => {
-    const orderItem = await orderItemModel.get({_id: orderItemId});
-
-    if (!orderItem) {
-        const error = new Error("Order item not found") as any;
-        error.statusCode = 404;
-        throw error;
-    }
-
-    return orderItem;
-};
-
-// UPDATE
-export const updateOrderItem = async (orderItemId: string, data: any) => {
-    const existingItem = await orderItemModel.get({_id: orderItemId});
-
-    if (!existingItem) {
-        const error = new Error("Order item not found") as any;
-        error.statusCode = 404;
-        throw error;
-    }
-
-    const oldOrderId = existingItem.order_id;
-
-    const quantity = data.quantity ?? existingItem.quantity;
-
-    const unitPrice = data.unit_price ?? existingItem.unit_price;
-
-    if (quantity < 0 || unitPrice < 0) {
-        const error = new Error("Quantity and unit price cannot be negative") as any;
-
-        error.statusCode = 400;
-        throw error;
-    }
-
-    const subtotal = Number(quantity) * Number(unitPrice);
-
-
-    const newOrderId =  data.order_id ?? existingItem.order_id;
-
-    // If order_id is changed, check new order exists
-    if (newOrderId !== oldOrderId) {
-
-        const newOrder = await orderModel.get({_id: newOrderId});
-
-        if (!newOrder) {
-            const error = new Error("New order not found") as any;
+        if (!order) {
+            const error = new Error("Order not found") as any;
             error.statusCode = 404;
             throw error;
         }
-    }
 
-    const orderItem = await orderItemModel.update(
-            {_id: orderItemId},
+        // Check Product
+        const product = await checkProductExists( data.product_id,  token );
+        const requestedQuantity = Number(data.quantity);
+        const availableQuantity = Number(product.quantity);
+    
+        if (requestedQuantity > availableQuantity) {
+            const error = new Error( `Insufficient stock. Requested: ${requestedQuantity}, Available: ${availableQuantity}` ) as any;
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const subtotal = requestedQuantity * Number(product.price);
+        // Create OrderItem
+        const orderItem = await this.create({
+            order_id: data.order_id,
+            product_id: data.product_id,
+            quantity: requestedQuantity,
+            unit_price: Number(product.price),
+            subtotal
+        });
+
+        const newQuantity = availableQuantity - requestedQuantity;
+
+        const response = await fetch( `${PRODUCT_SERVICE_URL}/api/v1/products/${data.product_id}`,
             {
-                ...data,
-                order_id: newOrderId,
-                quantity,
-                unit_price: unitPrice,
-                subtotal
-            },
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": token ? token : ""
+                },
+                body: JSON.stringify({
+                    quantity: newQuantity
+                })
+            }
         );
 
-    // Recalculate old order
-    await updateOrderTotal(oldOrderId);
+        if (!response.ok) {
+            // If stock update failed, remove the Order Item that we just created
+            await orderItemModel.delete({_id: orderItem._id });
+            const error = new Error( `Failed to update product stock (Status: ${response.status})` ) as any;
+            error.statusCode = 500;   
+            throw error;
+        }
 
-    // If moved to another order,
-    // recalculate the new order too
-    if (newOrderId !== oldOrderId) {
-        await updateOrderTotal(newOrderId);
-    }
+        await updateOrderTotal(data.order_id);
 
-    return orderItem;
-};
+        return orderItem;
+    };
 
-// DELETE
-export const deleteOrderItem = async (orderItemId: string) => {
-    const orderItem = await orderItemModel.get({_id: orderItemId});
 
-    if (!orderItem) {
-        const error = new Error( "Order item not found") as any;
-        error.statusCode = 404;
-        throw error;
-    }
+    // GET ALL
+    async getOrderItems()  {    
+        return await this.getAll({    
+            sort: {
+                created_at: -1
+            }
+        });
+    };
 
-    const orderId = orderItem.order_id;
 
-    await orderItemModel.delete({_id: orderItemId});
+    // GET BY ID
+    async getOrderItemById(orderItemId: string) {
+        const orderItem = await this.getById(orderItemId);
 
-    // Recalculate after deletion
-    await updateOrderTotal(orderId);
+        if (!orderItem) {
+            const error = new Error("Order item not found") as any;
+            error.statusCode = 404;
+            throw error;
+        }
 
-    return orderItem;
-};
+        return orderItem;
+    };
+
+
+    // UPDATE
+    async updateOrderItem(orderItemId: string, data: any)  {
+        const existingItem = await this.getById(orderItemId);
+
+        if (!existingItem) {
+            const error = new Error("Order item not found") as any;
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const oldOrderId = existingItem.order_id;
+        const quantity = data.quantity ?? existingItem.quantity;
+        const unitPrice = data.unit_price ?? existingItem.unit_price;
+
+        if (quantity < 0 || unitPrice < 0) {
+            const error = new Error("Quantity and unit price cannot be negative") as any;
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const subtotal = Number(quantity) * Number(unitPrice);
+        const newOrderId =  data.order_id ?? existingItem.order_id;
+
+        // If order_id is changed, check new order exists
+        if (newOrderId !== oldOrderId) {
+            const newOrder = await orderModel.get({_id: newOrderId});
+
+            if (!newOrder) {
+                const error = new Error("New order not found") as any;
+                error.statusCode = 404;
+                throw error;
+            }
+        }
+
+        const orderItem = await this.update(
+                orderItemId,
+                {
+                    ...data,
+                    order_id: newOrderId,
+                    quantity,
+                    unit_price: unitPrice,
+                    subtotal
+                },
+            );
+
+        // Recalculate old order
+        await updateOrderTotal(oldOrderId);
+
+        // If moved to another order,
+        // recalculate the new order too
+        if (newOrderId !== oldOrderId) {
+            await updateOrderTotal(newOrderId);
+        }
+
+        return orderItem;
+    };
+
+
+    // DELETE
+    async deleteOrderItem(orderItemId: string)  {
+        const orderItem = await this.getById(orderItemId);
+
+        if (!orderItem) {
+            const error = new Error( "Order item not found") as any;
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const orderId = orderItem.order_id;
+
+        await this.delete(orderItemId);
+
+        // Recalculate after deletion
+        await updateOrderTotal(orderId);
+
+        return orderItem;
+    };
+}
+
+export const orderItemService = new OrderItemService();
