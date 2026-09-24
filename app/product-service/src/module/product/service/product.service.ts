@@ -14,22 +14,36 @@ export class ProductService extends AbstractService<any> {
 
         const productName = data.name.trim();
         const productPrice = Number(data.price);
-        const incomingQuantity = data.quantity && data.quantity >= 0 ? Number(data.quantity) : 0;
+        const incomingQuantity = data.quantity !== undefined && data.quantity >= 0 ? Number(data.quantity) : 0;
 
         const existingProduct = await productModel.get({
             name: productName,
             price: productPrice
         });
 
+        // EXISTING PRODUCT → MERGE STOCK
         if (existingProduct) {
 
             existingProduct.quantity += incomingQuantity;
             await existingProduct.save();
 
+            // Product data changed, so publish UPDATED event
+            await publishKafkaMessage(
+                PRODUCT_TOPICS.UPDATED,
+                {
+                    product_id: existingProduct._id.toString(),
+                    name: existingProduct.name,
+                    price: existingProduct.price,
+                    quantity: existingProduct.quantity
+                },
+                existingProduct._id.toString()
+            );
+
             console.log(` Merged stock for [${productName}] at $${productPrice}. New quantity: ${existingProduct.quantity}`);
             return existingProduct;
         }
 
+        // NEW PRODUCT
         const product = await super.create({
             name: productName,
             price: productPrice,
@@ -116,7 +130,7 @@ export class ProductService extends AbstractService<any> {
                 price: updatedProduct.price,
                 quantity: updatedProduct.quantity
             },
-            productId
+            updatedProduct._id.toString()
         );
 
         return updatedProduct;
@@ -150,7 +164,7 @@ export class ProductService extends AbstractService<any> {
                 price: deletedProduct.price,
                 quantity: deletedProduct.quantity
             },
-            productId
+            deletedProduct._id.toString()
         );
 
         return deletedProduct;
