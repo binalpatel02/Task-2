@@ -36,7 +36,8 @@ export interface IServiceModel<T> {
     ): Promise<T | null>;
 
     getAll(
-        filter?: Record<string, unknown>
+        filter?: Record<string, unknown>,
+        sort?: Record<string, 1 | -1>
     ): Promise<T[]>;
 
     update(
