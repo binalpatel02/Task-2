@@ -18,6 +18,7 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@library/third-party": "*",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
     "passport": "^0.7.0",
