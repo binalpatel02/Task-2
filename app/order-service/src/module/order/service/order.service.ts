@@ -3,6 +3,7 @@ import { orderItemModel } from "../../orderItem/index.js";
 import { AbstractService } from "@library/shared";
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://127.0.0.1:3000";
+const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || "http://127.0.0.1:3001";
 
 // Check user exists
 const checkUserExists = async ( userId: string, token?: string ) => {
@@ -31,6 +32,72 @@ const checkUserExists = async ( userId: string, token?: string ) => {
         ) {
             throw new Error(`Unable to connect to User Service at ${USER_SERVICE_URL}`);
         }
+        throw error;
+    }
+};
+
+
+// Restore product stock
+const restoreProductStock = async ( productId: string, quantity: number, token?: string ) => {
+
+    try {
+
+        const response = await fetch(
+            `${PRODUCT_SERVICE_URL}/api/v1/products/${productId}`,
+            {
+                headers: {
+                    Authorization: token ? token : ""
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `Product not found (Status: ${response.status})`
+            );
+        }
+
+        const result = await response.json();
+
+        const product = result.data;
+
+        const currentQuantity = Number(product.quantity);
+        const newQuantity = currentQuantity + Number(quantity);
+
+        const updateResponse = await fetch(
+            `${PRODUCT_SERVICE_URL}/api/v1/products/${productId}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: token ? token : ""
+                },
+                body: JSON.stringify({
+                    quantity: newQuantity
+                })
+            }
+        );
+
+        if (!updateResponse.ok) {
+            throw new Error(
+                `Failed to restore product stock (Status: ${updateResponse.status})`
+            );
+        }
+
+        return newQuantity;
+    }
+
+    catch (error: any) {
+
+        if (
+            error.cause?.code === "ECONNREFUSED" ||
+            error.name === "TypeError"
+        ) {
+            throw new Error(
+                `Unable to connect to Product Service at ${PRODUCT_SERVICE_URL}`
+            );
+        }
+
         throw error;
     }
 };
@@ -226,9 +293,9 @@ export class OrderService extends AbstractService<any> {
 
 
     // DELETE
-    async deleteOrder( orderId: string ) {
+    async deleteOrder( orderId: string, token?: string ) {
 
-        const order = await this.delete(orderId);
+        const order = await this.getById(orderId);
 
         if (!order) {
             const error = new Error("Order not found") as any;
@@ -236,9 +303,35 @@ export class OrderService extends AbstractService<any> {
             throw error;
         }
 
-        await orderItemModel.deleteMany({ order_id: orderId });
+        const orderItems = await orderItemModel.getAll({
+            order_id: orderId
+        });
 
-        return order;
+        // Restore Product stock
+        for (const orderItem of orderItems) {
+
+            await restoreProductStock(
+                orderItem.product_id,
+                Number(orderItem.quantity),
+                token
+            );
+        }
+
+        // Delete OrderItems
+        await orderItemModel.deleteMany({
+            order_id: orderId
+        });
+
+        // Delete Order
+        const deletedOrder = await this.delete(orderId);
+
+        if (!deletedOrder) {
+            const error = new Error("Order deletion failed") as any;
+            error.statusCode = 500;
+            throw error;
+        }
+
+        return deletedOrder;
     };
 }
 
