@@ -263,33 +263,51 @@ export class OrderService extends AbstractService<any> {
 
 
     // UPDATE
-    async updateOrder( orderId: string, data: any ) {
+    async updateOrder( orderId: string, data: any, token?: string ) {
 
-        const existingOrder = await this.getById(orderId);
+    const existingOrder = await this.getById(orderId);
 
-        if (!existingOrder) {
-            const error = new Error("Order not found") as any;
-            error.statusCode = 404;
-            throw error;
+    if (!existingOrder) {
+        const error = new Error("Order not found") as any;
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const oldStatus = existingOrder.order_status;
+    const newStatus = data.order_status ?? oldStatus;
+
+    // Restore Product stock when order is cancelled
+    if ( oldStatus !== "CANCELLED" && newStatus === "CANCELLED" ) {
+
+        const orderItems = await orderItemModel.getAll({ order_id: orderId });
+
+        for (const orderItem of orderItems) {
+
+            await restoreProductStock(
+                orderItem.product_id,
+                Number(orderItem.quantity),
+                token
+            );
         }
+    }
 
-        const calculatedTotal = await calculateOrderTotal(orderId);
+    const calculatedTotal = await calculateOrderTotal(orderId);
 
-        const updateData = {
-            ...data,
-            total_amount: calculatedTotal
-        };
-
-        const order = await this.update( orderId, updateData );
-
-        if (!order) {
-            const error = new Error("Order not found") as any;
-            error.statusCode = 404;
-            throw error;
-        }
-
-        return order;
+    const updateData = {
+        ...data,
+        total_amount: calculatedTotal
     };
+
+    const order = await this.update( orderId, updateData );
+
+    if (!order) {
+        const error = new Error("Order not found") as any;
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return order;
+};
 
 
     // DELETE
