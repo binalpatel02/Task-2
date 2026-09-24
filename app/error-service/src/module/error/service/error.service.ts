@@ -23,11 +23,15 @@ export class ErrorService extends AbstractService<any> {
 
     // GET ALL
     async getErrors() {
-
-        const errors = await this.getAll();
-
-    return errors;
-}
+    
+        const errors = await this.getAll({   
+            sort: {   
+                created_at: -1   
+            }   
+        });
+  
+        return errors;
+    }
 
 
     // GET BY ID
