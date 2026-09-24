@@ -15,7 +15,7 @@ export class ErrorService extends AbstractService<any> {
 
         const errorData = createErrorMapper(data);
 
-        const error = await super.create(errorData);
+        const error = await this.create(errorData);
 
         return error;
     }
@@ -24,23 +24,16 @@ export class ErrorService extends AbstractService<any> {
     // GET ALL
     async getErrors() {
 
-        const errors = await errorModel.getAll(
-            {},
-            {
-                created_at: -1
-            }
-        );
+        const errors = await this.getAll();
 
-        return errors;
-    }
+    return errors;
+}
 
 
     // GET BY ID
     async getErrorById(errorId: string) {
 
-        const error = await errorModel.get({
-            error_id: errorId
-        });
+        const error = await this.getById(errorId);
 
         if (!error) {
             throw new Error("Error not found");
@@ -51,14 +44,9 @@ export class ErrorService extends AbstractService<any> {
 
 
     // UPDATE
-    async updateErrorById( errorId: string, data: any) {
+    async updateErrorById(errorId: string, data: any) {
 
-        const error = await errorModel.update(
-            {
-                error_id: errorId
-            },
-            data
-        );
+        const error = await this.update( errorId, data );
 
         if (!error) {
             throw new Error("Error not found");
@@ -71,9 +59,7 @@ export class ErrorService extends AbstractService<any> {
     // DELETE
     async deleteErrorById(errorId: string) {
 
-        const error = await errorModel.delete({
-            error_id: errorId
-        });
+        const error = await this.delete(errorId);
 
         if (!error) {
             throw new Error("Error not found");
