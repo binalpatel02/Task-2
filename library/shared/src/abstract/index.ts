@@ -1,4 +1,5 @@
 export * from "./controller/index.js"
+export * from "./handler/index.js"
 export * from "./interface/index.js"
 export * from "./model/index.js"
 export * from "./service/index.js"
