@@ -1,7 +1,5 @@
 export interface IServiceQuery {
     filter?: Record<string, unknown>;
-    page?: number;
-    limit?: number;
     sort?: Record<string, 1 | -1>;
 }
 
