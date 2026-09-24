@@ -46,4 +46,8 @@ export interface IServiceModel<T> {
     delete(
         filter: Record<string, unknown>
     ): Promise<T | null>;
+
+    deleteMany(
+        filter: Record<string, unknown>
+    ): Promise<any>;
 }
