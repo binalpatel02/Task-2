@@ -53,6 +53,12 @@ export class OrderItemService extends AbstractService <any> {
         const product = await checkProductExists( data.product_id,  token );
         const requestedQuantity = Number(data.quantity);
         const availableQuantity = Number(product.quantity);
+
+        if (!Number.isInteger(requestedQuantity) || requestedQuantity <= 0) {
+            const error = new Error("Quantity must be a positive integer") as any;
+            error.statusCode = 400;
+            throw error;
+        }
     
         if (requestedQuantity > availableQuantity) {
             const error = new Error( `Insufficient stock. Requested: ${requestedQuantity}, Available: ${availableQuantity}` ) as any;
@@ -60,13 +66,15 @@ export class OrderItemService extends AbstractService <any> {
             throw error;
         }
 
-        const subtotal = requestedQuantity * Number(product.price);
+        const unitPrice = Number(product.price);
+        const subtotal = requestedQuantity * unitPrice;
+
         // Create OrderItem
         const orderItem = await this.create({
             order_id: data.order_id,
             product_id: data.product_id,
             quantity: requestedQuantity,
-            unit_price: Number(product.price),
+            unit_price: unitPrice,
             subtotal
         });
 
@@ -89,7 +97,7 @@ export class OrderItemService extends AbstractService <any> {
             // If stock update failed, remove the Order Item that we just created
             await orderItemModel.delete({_id: orderItem._id });
             const error = new Error( `Failed to update product stock (Status: ${response.status})` ) as any;
-            error.statusCode = 500;   
+            error.statusCode = 500;
             throw error;
         }
 
@@ -100,8 +108,8 @@ export class OrderItemService extends AbstractService <any> {
 
 
     // GET ALL
-    async getOrderItems()  {    
-        return await this.getAll({    
+    async getOrderItems() {
+        return await this.getAll({
             sort: {
                 created_at: -1
             }
@@ -124,7 +132,7 @@ export class OrderItemService extends AbstractService <any> {
 
 
     // UPDATE
-    async updateOrderItem(orderItemId: string, data: any)  {
+    async updateOrderItem(orderItemId: string, data: any, token?: string) {
         const existingItem = await this.getById(orderItemId);
 
         if (!existingItem) {
@@ -134,17 +142,16 @@ export class OrderItemService extends AbstractService <any> {
         }
 
         const oldOrderId = existingItem.order_id;
-        const quantity = data.quantity ?? existingItem.quantity;
-        const unitPrice = data.unit_price ?? existingItem.unit_price;
+        const newOrderId = data.order_id ?? existingItem.order_id;
 
-        if (quantity < 0 || unitPrice < 0) {
-            const error = new Error("Quantity and unit price cannot be negative") as any;
+        const oldQuantity = Number(existingItem.quantity);
+        const newQuantity = data.quantity !== undefined ? Number(data.quantity) : oldQuantity;
+
+        if (!Number.isInteger(newQuantity) || newQuantity <= 0) {
+            const error = new Error("Quantity must be a positive integer") as any;
             error.statusCode = 400;
             throw error;
         }
-
-        const subtotal = Number(quantity) * Number(unitPrice);
-        const newOrderId =  data.order_id ?? existingItem.order_id;
 
         // If order_id is changed, check new order exists
         if (newOrderId !== oldOrderId) {
@@ -157,16 +164,66 @@ export class OrderItemService extends AbstractService <any> {
             }
         }
 
-        const orderItem = await this.update(
-                orderItemId,
+        // Check Product
+        const product = await checkProductExists(existingItem.product_id, token);
+        const availableQuantity = Number(product.quantity);
+
+        // Calculate stock difference
+        const quantityDifference = newQuantity - oldQuantity;
+
+        // If quantity increases, check additional stock
+        if (quantityDifference > 0 && quantityDifference > availableQuantity) {
+            const error = new Error(
+                `Insufficient stock. Additional requested: ${quantityDifference}, Available: ${availableQuantity}`
+            ) as any;
+            error.statusCode = 400;
+            throw error;
+        }
+
+        // Increase/decrease Product stock
+        const newProductQuantity = availableQuantity - quantityDifference;
+
+        if (quantityDifference !== 0) {
+            const response = await fetch(`${PRODUCT_SERVICE_URL}/api/v1/products/${existingItem.product_id}`,
                 {
-                    ...data,
-                    order_id: newOrderId,
-                    quantity,
-                    unit_price: unitPrice,
-                    subtotal
-                },
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": token ? token : ""
+                    },
+                    body: JSON.stringify({
+                        quantity: newProductQuantity
+                    })
+                }
             );
+
+            if (!response.ok) {
+                const error = new Error(`Failed to update product stock (Status: ${response.status})`) as any;
+                error.statusCode = 500;
+                throw error;
+            }
+        }
+
+        const unitPrice = Number(existingItem.unit_price);
+        const subtotal = newQuantity * unitPrice;
+
+        // Update OrderItem
+        const orderItem = await this.update(
+            orderItemId,
+            {
+                ...data,
+                order_id: newOrderId,
+                quantity: newQuantity,
+                unit_price: unitPrice,
+                subtotal
+            }
+        );
+
+        if (!orderItem) {
+            const error = new Error("Order item update failed") as any;
+            error.statusCode = 500;
+            throw error;
+        }
 
         // Recalculate old order
         await updateOrderTotal(oldOrderId);
@@ -182,23 +239,56 @@ export class OrderItemService extends AbstractService <any> {
 
 
     // DELETE
-    async deleteOrderItem(orderItemId: string)  {
+    async deleteOrderItem(orderItemId: string, token?: string) {
         const orderItem = await this.getById(orderItemId);
 
         if (!orderItem) {
-            const error = new Error( "Order item not found") as any;
+            const error = new Error("Order item not found") as any;
             error.statusCode = 404;
             throw error;
         }
 
         const orderId = orderItem.order_id;
 
-        await this.delete(orderItemId);
+        // Check Product
+        const product = await checkProductExists(orderItem.product_id, token);
+        const availableQuantity = Number(product.quantity);
+
+        // Restore Product stock
+        const newQuantity = availableQuantity + Number(orderItem.quantity);
+
+        const response = await fetch(`${PRODUCT_SERVICE_URL}/api/v1/products/${orderItem.product_id}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": token ? token : ""
+                },
+                body: JSON.stringify({
+                    quantity: newQuantity
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const error = new Error(`Failed to restore product stock (Status: ${response.status})`) as any;
+            error.statusCode = 500;
+            throw error;
+        }
+
+        // Delete OrderItem
+        const deletedItem = await this.delete(orderItemId);
+
+        if (!deletedItem) {
+            const error = new Error("Order item deletion failed") as any;
+            error.statusCode = 500;
+            throw error;
+        }
 
         // Recalculate after deletion
         await updateOrderTotal(orderId);
 
-        return orderItem;
+        return deletedItem;
     };
 }
 
