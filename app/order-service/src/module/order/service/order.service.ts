@@ -1,6 +1,7 @@
 import { orderModel } from "../model/order.model.js";
 import { orderItemModel } from "../../orderItem/index.js";
 import { AbstractService } from "@library/shared";
+import type { IOrder } from "@library/schema/order";
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || "http://127.0.0.1:3000";
 const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || "http://127.0.0.1:3001";
@@ -156,7 +157,7 @@ export const updateOrderTotal = async ( orderId: string ) => {
 };
 
 
-export class OrderService extends AbstractService<any> {
+export class OrderService extends AbstractService<IOrder> {
 
     constructor() {
         super(orderModel, "_id");

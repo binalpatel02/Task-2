@@ -2,8 +2,9 @@ import { publishKafkaMessage } from "@library/third-party/kafka";
 import { PRODUCT_TOPICS } from "../../../library/kafka/topic.js";
 import { productModel } from "../model/product.model.js";
 import { AbstractService } from "@library/shared";
+import type { IProduct } from "@library/schema/product";
 
-export class ProductService extends AbstractService<any> {
+export class ProductService extends AbstractService<IProduct> {
 
     constructor() {
         super(productModel, "_id");
@@ -68,13 +69,12 @@ export class ProductService extends AbstractService<any> {
 
     // GET ALL
     async getAll() {
-
-        return await productModel.getAll(
-            {},
-            {
-                created_at: -1
-            }
-        );
+    
+        return await super.getAll({
+            sort: {    
+                created_at: -1    
+            }    
+        });
     }
 
 

@@ -2,6 +2,7 @@ import { orderModel } from "../../order/model/order.model.js";
 import { orderItemModel } from "../model/orderItem.model.js";
 import { updateOrderTotal } from "../../order/service/order.service.js";
 import { AbstractService } from "@library/shared";
+import type { IOrderItem } from "@library/schema/order";
 
 const PRODUCT_SERVICE_URL = process.env.PRODUCT_SERVICE_URL || "http://127.0.0.1:3001";
 
@@ -31,7 +32,7 @@ const checkProductExists = async (productId: string, token?: string) => {
 };
 
 
-export class OrderItemService extends AbstractService <any> {
+export class OrderItemService extends AbstractService<IOrderItem> {
 
     constructor() {
         super(orderItemModel, "_id");

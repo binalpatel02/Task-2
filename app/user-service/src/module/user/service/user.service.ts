@@ -4,13 +4,14 @@ import { publishKafkaMessage } from "@library/third-party/kafka";
 import { USER_TOPICS } from "../../../library/kafka/topic.js";
 import { userModel } from "../model/user.model.js";
 import { AbstractService } from "@library/shared";
+import type { IUser } from "@library/schema/user";
 
 interface ILoginRequest {
     email: string;
     password: string;
 }
 
-export class UserService extends AbstractService<any> {
+export class UserService extends AbstractService<IUser> {
     
     constructor() {
         super(userModel, "_id")
@@ -107,8 +108,7 @@ export class UserService extends AbstractService<any> {
 
     // GET USERS
     async getUsers() {
-        const users = await userModel.getAll();
-        return users;
+        return await super.getAll();
     };
 
 

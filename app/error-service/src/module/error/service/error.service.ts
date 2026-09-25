@@ -1,9 +1,9 @@
 import { AbstractService } from "@library/shared";
-import { IError } from "@library/schema/error";
+import type { IError } from "@library/schema/error";
 import { createErrorMapper } from "../mapper/error.mapper.js";
 import { errorModel } from "../model/error.model.js";
 
-export class ErrorService extends AbstractService<any> {
+export class ErrorService extends AbstractService<IError> {
 
     constructor() {
         super(errorModel, "_id");
