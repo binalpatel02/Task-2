@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { userService } from "../service/user.service.js";
 import { createUserValidator, loginValidator } from "../validator/user.validator.js";
 import { userResponseMapper } from "../mapper/user.mapper.js";
-import { AbstractController, IController } from "@library/shared";
+import { AbstractController, type IController } from "@library/shared"; 
 
 // LOGIN
 export class LoginUserController extends AbstractController implements IController{

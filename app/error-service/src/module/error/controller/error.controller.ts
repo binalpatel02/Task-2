@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { errorService } from "../service/error.service.js" 
 import { createErrorValidator } from "../validator/error.validator.js";
-import { AbstractController, IController } from "@library/shared";
+import { AbstractController, type IController } from "@library/shared"; 
 
 
 export class CreateErrorController extends AbstractController implements IController {

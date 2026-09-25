@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { orderService } from "../service/order.service.js";
 import { createOrderValidator, updateOrderValidator } from "../validator/order.validator.js";
-import { AbstractController, IController } from "@library/shared";
+import { AbstractController, type IController } from "@library/shared"; 
 
 // CREATE
 export class CreateOrderController extends AbstractController implements IController{

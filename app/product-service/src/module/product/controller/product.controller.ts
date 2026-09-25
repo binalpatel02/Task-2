@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { productService } from "../service/product.service.js";
 import { createProductValidator, updateProductValidator } from "../validator/product.validator.js";
 import { productResponseMapper } from "../mapper/product.mapper.js";
-import { AbstractController, IController } from "@library/shared";
+import { AbstractController, type IController } from "@library/shared"; 
 
 // CREATE
 export class CreateProductController extends AbstractController implements IController {

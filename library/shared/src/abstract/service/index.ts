@@ -1,4 +1,4 @@
-import { IService, IServiceQuery, IServiceModel } from "../interface/index.js";
+import type { IService, IServiceQuery, IServiceModel } from "../interface/index.js";
 
 export abstract class AbstractService<T>
     implements IService<T> {
