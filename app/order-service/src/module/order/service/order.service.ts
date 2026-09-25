@@ -179,9 +179,10 @@ export class OrderService extends AbstractService<IOrder> {
 
             const order = await this.create({
                 user_id: data.user_id,
-                total_amount: 0,
+                total_amount: data.total_amount,
                 order_status: data.order_status || "PENDING"
             });
+            console.log("CREATE ORDER DATA:", order);
 
             return order;
         }
@@ -266,49 +267,52 @@ export class OrderService extends AbstractService<IOrder> {
     // UPDATE
     async updateOrder( orderId: string, data: any, token?: string ) {
 
-    const existingOrder = await this.getById(orderId);
+        const existingOrder = await this.getById(orderId);
 
-    if (!existingOrder) {
-        const error = new Error("Order not found") as any;
-        error.statusCode = 404;
-        throw error;
-    }
-
-    const oldStatus = existingOrder.order_status;
-    const newStatus = data.order_status ?? oldStatus;
-
-    // Restore Product stock when order is cancelled
-    if ( oldStatus !== "CANCELLED" && newStatus === "CANCELLED" ) {
-
-        const orderItems = await orderItemModel.getAll({ order_id: orderId });
-
-        for (const orderItem of orderItems) {
-
-            await restoreProductStock(
-                orderItem.product_id,
-                Number(orderItem.quantity),
-                token
-            );
+        if (!existingOrder) {
+            const error = new Error("Order not found") as any;
+            error.statusCode = 404;
+            throw error;
         }
-    }
 
-    const calculatedTotal = await calculateOrderTotal(orderId);
+        const oldStatus = existingOrder.order_status;
+        const newStatus = data.order_status ?? oldStatus;
 
-    const updateData = {
-        ...data,
-        total_amount: calculatedTotal
+        // Restore Product stock when order is cancelled
+        if ( oldStatus !== "CANCELLED" && newStatus === "CANCELLED" ) {
+            const orderItems = await orderItemModel.getAll({ order_id: orderId });
+
+            for (const orderItem of orderItems) {
+
+                await restoreProductStock(
+                    orderItem.product_id,
+                    Number(orderItem.quantity),
+                    token
+                );
+            }
+        }
+
+        const updateData = {      
+            ...data   
+        };
+
+        // When cancelled, total amount becomes 0
+        if (newStatus === "CANCELLED") {
+            updateData.total_amount = 0;
+        }
+
+        const order = await this.update( orderId, updateData );
+
+        if (!order) {
+            const error = new Error("Order not found") as any;
+            error.statusCode = 404;
+            throw error;
+        }
+
+        console.log("UPDATE ORDER DATA:", order);
+
+        return order;
     };
-
-    const order = await this.update( orderId, updateData );
-
-    if (!order) {
-        const error = new Error("Order not found") as any;
-        error.statusCode = 404;
-        throw error;
-    }
-
-    return order;
-};
 
 
     // DELETE
